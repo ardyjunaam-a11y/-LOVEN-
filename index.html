@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOVEN | Kue & Dessert</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --pink-deep:#f4a7c1;
+    --cream:#fdf6ec;
+    --brown:#6b4226;
+    --brown-light:#a97c50;
+    --sidebar:#3d2b1f;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:'Poppins',sans-serif;background-color:#f7f3ee;color:var(--brown);}
+  .font-display{font-family:'Playfair Display',serif;}
+
+  .sidebar{background:var(--sidebar);}
+  .sidebar a.active{background:rgba(244,167,193,0.15);border-left:4px solid var(--pink-deep);}
+
+  .card{background:#fff;border-radius:1.25rem;box-shadow:0 4px 16px rgba(0,0,0,0.05);}
+
+  .btn-primary{background:linear-gradient(135deg,var(--pink-deep),#e88bab);color:#fff;transition:.25s ease;}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(244,167,193,0.5);}
+  .btn-primary:disabled{opacity:.6;transform:none;box-shadow:none;cursor:not-allowed;}
+
+  .btn-danger{background:#e35d6a;color:#fff;transition:.25s ease;}
+  .btn-danger:hover{background:#c94551;}
+
+  .loader{border:4px solid #f1e3d9;border-top:4px solid var(--pink-deep);border-radius:50%;width:36px;height:36px;animation:spin 1s linear infinite;margin:0 auto;}
+  @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+  .fade-in{animation:fadeIn .35s ease both;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  table th{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--brown-light);}
+  .status-badge{padding:2px 10px;border-radius:999px;font-size:0.75rem;font-weight:600;display:inline-block;}
+  .status-pending{background:#fff3cd;color:#8a6d3b;}
+  .status-process{background:#d6e4ff;color:#2b4c9b;}
+  .status-done{background:#d4edda;color:#2e7d4f;}
+  .status-cancel{background:#f8d7da;color:#a13c46;}
+
+  .modal-backdrop{background:rgba(59,40,25,0.45);}
+  .cart-drawer{transition:transform .3s ease;}
+  .cart-drawer.closed{transform:translateX(100%);}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:#e5d5c5;border-radius:8px;}
+</style>
+</head>
+<body>
+
+<!-- ================== CONFIG WARNING (tampil kalau SUPABASE_URL belum diisi) ================== -->
+<div id="configScreen" class="hidden min-h-screen flex items-center justify-center px-4" style="background:#fdf6ec;">
+  <div class="card p-8 max-w-lg w-full fade-in">
+    <div class="text-4xl mb-3 text-center">⚙️</div>
+    <h2 class="font-display text-2xl font-bold text-brown mb-3 text-center">Supabase Belum Dikonfigurasi</h2>
+    <p class="text-sm text-brown-light mb-4" style="color:var(--brown-light)">Buka file ini di editor, cari bagian berikut di dalam tag <code>&lt;script&gt;</code> paling bawah, lalu ganti dengan URL &amp; anon key project Supabase kamu (Settings → API):</p>
+    <pre class="bg-[#fdf6ec] rounded-lg p-4 text-xs overflow-x-auto">const SUPABASE_URL = "URL_SUPABASE";
+const SUPABASE_ANON_KEY = "ANON_KEY_SUPABASE";</pre>
+    <p class="text-xs text-brown-light mt-4" style="color:var(--brown-light)">Setelah diisi dan file disimpan, muat ulang halaman ini.</p>
+  </div>
+</div>
+
+<!-- ================== LOGIN SCREEN (Google saja, sekaligus daftar otomatis) ================== -->
+<div id="loginScreen" class="hidden min-h-screen flex items-center justify-center px-4" style="background:radial-gradient(circle at 30% 30%, rgba(244,167,193,0.25), transparent 45%), #fdf6ec;">
+  <div class="card p-10 max-w-md w-full text-center fade-in">
+    <h1 class="font-display text-4xl font-extrabold text-brown mb-2">LOVEN</h1>
+    <p class="text-sm text-brown-light mb-8" style="color:var(--brown-light)">Kue &amp; Dessert Buatan Tangan</p>
+    <button id="googleLoginBtn" class="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 font-medium hover:bg-gray-50 transition">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 6 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 6 29.5 4 24 4c-7.8 0-14.4 4.5-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.4l-6.3-5.3C29.4 35 26.8 36 24 36c-5.4 0-9.9-3.3-11.3-8l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2.1-2 3.9-3.9 5.3l6.3 5.3C40.9 36.3 44 30.7 44 24c0-1.3-.1-2.5-.4-3.5z"/></svg>
+      Masuk / Daftar dengan Google
+    </button>
+    <p class="text-xs text-brown-light mt-5" style="color:var(--brown-light)">Akun Google-mu otomatis terdaftar sebagai member LOVEN.</p>
+    <p id="loginError" class="hidden text-red-500 text-sm mt-5 font-medium"></p>
+  </div>
+</div>
+
+<!-- ================== ADMIN DASHBOARD ================== -->
+<div id="dashboardScreen" class="hidden min-h-screen flex">
+  <aside class="sidebar w-64 min-h-screen text-white flex-col hidden md:flex">
+    <div class="px-6 py-6 border-b border-white/10">
+      <h1 class="font-display text-2xl font-extrabold">LOVEN</h1>
+      <p class="text-xs text-white/50">Admin Panel</p>
+    </div>
+    <nav class="flex-1 py-4">
+      <a href="#" onclick="switchTab('produk')" id="navProduk" class="active flex items-center gap-3 px-6 py-3 text-sm font-medium hover:bg-white/5 transition">🍰 Produk</a>
+      <a href="#" onclick="switchTab('pesanan')" id="navPesanan" class="flex items-center gap-3 px-6 py-3 text-sm font-medium hover:bg-white/5 transition">📦 Pesanan</a>
+      <a href="#" onclick="switchTab('pengaturan')" id="navPengaturan" class="flex items-center gap-3 px-6 py-3 text-sm font-medium hover:bg-white/5 transition">⚙️ Pengaturan</a>
+    </nav>
+    <div class="px-6 py-5 border-t border-white/10">
+      <p id="adminEmailLabel" class="text-xs text-white/50 mb-3 truncate"></p>
+      <button onclick="doLogout()" class="w-full btn-danger py-2 rounded-lg text-sm font-semibold">Log Out</button>
+    </div>
+  </aside>
+
+  <main class="flex-1 p-5 md:p-10">
+    <div class="flex items-center justify-between mb-4 md:hidden">
+      <h1 class="font-display text-2xl font-extrabold text-brown">LOVEN Admin</h1>
+      <button onclick="doLogout()" class="btn-danger px-4 py-2 rounded-lg text-sm font-semibold">Log Out</button>
+    </div>
+    <div class="mb-6 md:hidden">
+      <select onchange="switchTab(this.value)" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium">
+        <option value="produk">🍰 Produk</option>
+        <option value="pesanan">📦 Pesanan</option>
+        <option value="pengaturan">⚙️ Pengaturan</option>
+      </select>
+    </div>
+
+    <!-- TAB PRODUK -->
+    <div id="tabProduk">
+      <h2 class="font-display text-3xl font-bold text-brown mb-6">Manajemen Produk</h2>
+      <div class="card p-6 mb-8">
+        <h3 class="font-semibold text-lg mb-4">Tambah Produk Baru</h3>
+        <form id="produkForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium">Nama Kue</label>
+            <input type="text" id="inputNama" required class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300">
+          </div>
+          <div>
+            <label class="text-sm font-medium">Harga (Rp)</label>
+            <input type="number" id="inputHarga" required min="0" class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300">
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-sm font-medium">Deskripsi</label>
+            <textarea id="inputDeskripsi" rows="2" class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300"></textarea>
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-sm font-medium">URL Gambar Kue</label>
+            <input type="url" id="inputGambar" placeholder="https://..." class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300">
+          </div>
+          <div class="md:col-span-2">
+            <button type="submit" id="submitProdukBtn" class="btn-primary px-6 py-2.5 rounded-lg font-semibold">+ Tambah Produk</button>
+          </div>
+        </form>
+      </div>
+      <div class="card p-6">
+        <h3 class="font-semibold text-lg mb-4">Daftar Produk</h3>
+        <div id="loadingProdukAdmin" class="py-8"><div class="loader"></div></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm" id="produkTable">
+            <thead>
+              <tr class="text-left border-b border-gray-100">
+                <th class="py-3">Gambar</th><th class="py-3">Nama</th><th class="py-3">Harga</th><th class="py-3">Deskripsi</th><th class="py-3">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="produkTableBody"></tbody>
+          </table>
+        </div>
+        <p id="emptyProdukAdmin" class="hidden text-center text-brown-light py-6">Belum ada produk.</p>
+      </div>
+    </div>
+
+    <!-- TAB PESANAN -->
+    <div id="tabPesanan" class="hidden">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="font-display text-3xl font-bold text-brown">Pesanan Masuk</h2>
+        <button onclick="fetchPesanan()" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">🔄 Segarkan</button>
+      </div>
+      <div class="card p-6">
+        <div id="loadingPesanan" class="py-8"><div class="loader"></div></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left border-b border-gray-100">
+                <th class="py-3">Pembeli</th><th class="py-3">No WA</th><th class="py-3">Alamat</th><th class="py-3">Item Pesanan</th><th class="py-3">Total</th><th class="py-3">Bukti Bayar</th><th class="py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody id="pesananTableBody"></tbody>
+          </table>
+        </div>
+        <p id="emptyPesanan" class="hidden text-center text-brown-light py-6">Belum ada pesanan masuk.</p>
+      </div>
+    </div>
+
+    <!-- TAB PENGATURAN -->
+    <div id="tabPengaturan" class="hidden">
+      <h2 class="font-display text-3xl font-bold text-brown mb-6">Pengaturan Pembayaran</h2>
+      <div class="card p-6 max-w-2xl">
+        <div id="loadingPengaturan" class="py-8"><div class="loader"></div></div>
+        <form id="pengaturanForm" class="hidden space-y-5">
+          <div>
+            <label class="text-sm font-medium">URL Gambar QRIS</label>
+            <input type="url" id="inputQrisUrl" placeholder="https://..." class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300">
+            <p class="text-xs text-brown-light mt-1" style="color:var(--brown-light)">Upload gambar QRIS ke hosting gambar, lalu tempel link-nya di sini.</p>
+            <img id="qrisPreview" class="hidden mt-3 w-40 h-40 object-contain border border-gray-100 rounded-lg p-2">
+          </div>
+          <div>
+            <label class="text-sm font-medium">Info Rekening / Pembayaran Lain</label>
+            <textarea id="inputInfoPembayaran" rows="4" placeholder="Contoh: BCA 1234567890 a.n. Nama Anda&#10;DANA/OVO/GoPay: 0812xxxxxxx" class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300"></textarea>
+          </div>
+          <button type="submit" id="submitPengaturanBtn" class="btn-primary px-6 py-2.5 rounded-lg font-semibold">Simpan Pengaturan</button>
+          <p id="pengaturanSuccess" class="hidden text-green-600 text-sm font-medium">Tersimpan ✓</p>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================== CUSTOMER STORE ================== -->
+<div id="storeScreen" class="hidden">
+  <header class="sticky top-0 z-30 bg-[#fdf6ec]/95 backdrop-blur border-b border-black/5">
+    <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
+      <h1 class="font-display text-2xl font-extrabold text-brown">LOVEN</h1>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button id="myOrdersBtn" class="text-sm font-medium px-3 py-2 rounded-lg hover:bg-black/5">📋 <span class="hidden sm:inline">Pesanan Saya</span></button>
+        <button id="cartBtn" class="relative text-sm font-medium px-3 py-2 rounded-lg hover:bg-black/5">
+          🛒 <span class="hidden sm:inline">Keranjang</span>
+          <span id="cartBadge" class="hidden absolute -top-1 -right-1 bg-[var(--pink-deep)] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">0</span>
+        </button>
+        <span id="storeUserLabel" class="hidden sm:inline text-sm font-medium truncate max-w-[120px]"></span>
+        <button onclick="doLogout()" class="btn-danger text-xs font-semibold px-3 py-2 rounded-lg">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="px-5 pt-12 pb-8 text-center" style="background:radial-gradient(circle at 50% 0%, rgba(244,167,193,0.2), transparent 55%);">
+    <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-brown mb-3">Kue &amp; Dessert Buatan Tangan</h2>
+    <p class="text-brown-light max-w-md mx-auto" style="color:var(--brown-light)">Dipesan segar untuk hari spesialmu. Pilih kue favoritmu, checkout, dan bayar dengan mudah lewat QRIS.</p>
+  </section>
+
+  <main class="max-w-6xl mx-auto px-5 pb-20">
+    <div id="loadingProduk" class="py-16"><div class="loader"></div></div>
+    <div id="produkGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"></div>
+    <p id="emptyProduk" class="hidden text-center text-brown-light py-16" style="color:var(--brown-light)">Belum ada produk tersedia saat ini.</p>
+  </main>
+
+  <footer class="text-center text-xs text-brown-light py-8 border-t border-black/5" style="color:var(--brown-light)">
+    &copy; <span id="year"></span> LOVEN. Semua pesanan diproses manual oleh admin.
+  </footer>
+
+  <!-- CART DRAWER -->
+  <div id="cartOverlay" class="hidden fixed inset-0 z-40 modal-backdrop" onclick="closeCart()"></div>
+  <aside id="cartDrawer" class="cart-drawer closed fixed top-0 right-0 z-50 h-full w-full sm:w-96 bg-white shadow-2xl flex flex-col">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <h3 class="font-display text-xl font-bold text-brown">Keranjang</h3>
+      <button onclick="closeCart()" class="text-2xl leading-none text-brown-light" style="color:var(--brown-light)">&times;</button>
+    </div>
+    <div id="cartItemsWrap" class="flex-1 overflow-y-auto px-5 py-4 space-y-4"></div>
+    <p id="cartEmptyMsg" class="hidden text-center text-brown-light py-10" style="color:var(--brown-light)">Keranjangmu masih kosong.</p>
+    <div class="px-5 py-4 border-t border-gray-100">
+      <div class="flex items-center justify-between mb-4">
+        <span class="font-semibold">Total</span>
+        <span id="cartTotal" class="font-display text-xl font-bold">Rp 0</span>
+      </div>
+      <button id="checkoutBtn" class="btn-primary w-full py-3 rounded-lg font-semibold">Checkout</button>
+    </div>
+  </aside>
+
+  <!-- CHECKOUT MODAL -->
+  <div id="checkoutModal" class="hidden fixed inset-0 z-40 modal-backdrop flex items-center justify-center px-4 py-8 overflow-y-auto">
+    <div class="card p-8 max-w-md w-full fade-in relative my-auto">
+      <button onclick="closeModal('checkoutModal')" class="absolute top-4 right-4 text-brown-light text-xl leading-none" style="color:var(--brown-light)">&times;</button>
+
+      <div id="checkoutStep1">
+        <h2 class="font-display text-2xl font-bold text-brown mb-5">Data Pemesan</h2>
+        <form id="checkoutForm" class="space-y-3">
+          <div>
+            <label class="text-sm font-medium">Nama Penerima</label>
+            <input type="text" id="ckNama" required class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300 text-sm">
+          </div>
+          <div>
+            <label class="text-sm font-medium">No. WhatsApp</label>
+            <input type="tel" id="ckWa" required placeholder="08xxxxxxxxxx" class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300 text-sm">
+          </div>
+          <div>
+            <label class="text-sm font-medium">Alamat Lengkap</label>
+            <textarea id="ckAlamat" required rows="2" class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300 text-sm"></textarea>
+          </div>
+          <div class="bg-[#fdf6ec] rounded-lg p-4 text-sm">
+            <div class="flex justify-between font-semibold"><span>Total Belanja</span><span id="ckTotal">Rp 0</span></div>
+          </div>
+          <button type="submit" class="btn-primary w-full py-2.5 rounded-lg font-semibold text-sm">Lanjut ke Pembayaran</button>
+        </form>
+      </div>
+
+      <div id="checkoutStep2" class="hidden">
+        <h2 class="font-display text-2xl font-bold text-brown mb-1">Pembayaran</h2>
+        <p class="text-xs text-brown-light mb-5" style="color:var(--brown-light)">Scan QRIS atau transfer, lalu unggah bukti pembayaran.</p>
+        <div id="paymentInfoWrap" class="mb-5"><div class="py-6"><div class="loader"></div></div></div>
+        <form id="buktiForm" class="space-y-3">
+          <div>
+            <label class="text-sm font-medium">Unggah Bukti Pembayaran</label>
+            <input type="file" id="buktiFile" accept="image/*" required class="w-full mt-1 text-sm">
+          </div>
+          <p id="checkoutError" class="hidden text-red-500 text-xs font-medium"></p>
+          <button type="submit" id="buktiSubmitBtn" class="btn-primary w-full py-2.5 rounded-lg font-semibold text-sm">Kirim Pesanan</button>
+          <button type="button" onclick="backToStep1()" class="w-full py-2 text-xs text-brown-light" style="color:var(--brown-light)">&larr; Kembali</button>
+        </form>
+      </div>
+
+      <div id="checkoutStep3" class="hidden text-center py-6">
+        <div class="text-5xl mb-4">🎉</div>
+        <h2 class="font-display text-2xl font-bold text-brown mb-2">Pesanan Terkirim!</h2>
+        <p class="text-sm text-brown-light mb-6" style="color:var(--brown-light)">Admin akan mengecek pembayaranmu dan segera memproses pesanan. Cek status di "Pesanan Saya".</p>
+        <button onclick="closeModal('checkoutModal')" class="btn-primary px-6 py-2.5 rounded-lg font-semibold text-sm">Selesai</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PESANAN SAYA MODAL -->
+  <div id="ordersModal" class="hidden fixed inset-0 z-40 modal-backdrop flex items-center justify-center px-4 py-8 overflow-y-auto">
+    <div class="card p-8 max-w-lg w-full fade-in relative my-auto">
+      <button onclick="closeModal('ordersModal')" class="absolute top-4 right-4 text-brown-light text-xl leading-none" style="color:var(--brown-light)">&times;</button>
+      <h2 class="font-display text-2xl font-bold text-brown mb-5">Pesanan Saya</h2>
+      <div id="loadingMyOrders" class="py-8"><div class="loader"></div></div>
+      <div id="myOrdersList" class="space-y-4 max-h-[60vh] overflow-y-auto"></div>
+      <p id="emptyMyOrders" class="hidden text-center text-brown-light py-8" style="color:var(--brown-light)">Kamu belum punya pesanan.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================== KONFIGURASI ================== */
+const SUPABASE_URL = "URL_SUPABASE";
+const SUPABASE_ANON_KEY = "ANON_KEY_SUPABASE";
+const ADMIN_EMAIL = "ardyjunaam@gmail.com";
+const BUKTI_BUCKET = "bukti-bayar";
+
+function showEl(id) { document.getElementById(id).classList.remove("hidden"); }
+function hideEl(id) { document.getElementById(id).classList.add("hidden"); }
+function openModal(id) { showEl(id); }
+function closeModal(id) { hideEl(id); }
+function formatRupiah(angka) { return "Rp " + Number(angka).toLocaleString("id-ID"); }
+
+let supabaseClient = null;
+let supabaseReady = false;
+try {
+  if (SUPABASE_URL && SUPABASE_URL !== "URL_SUPABASE" && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "ANON_KEY_SUPABASE") {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseReady = true;
+  }
+} catch (e) {
+  supabaseReady = false;
+}
+
+if (!supabaseReady) {
+  showEl("configScreen");
+} else {
+  runApp();
+}
+
+function runApp() {
+let currentUser = null;
+let isAdmin = false;
+
+document.getElementById("year") && (document.getElementById("year").textContent = new Date().getFullYear());
+
+/* ================== AUTH FLOW ================== */
+async function checkSession() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session && session.user) {
+    handleUserLoggedIn(session.user);
+  } else {
+    hideEl("dashboardScreen"); hideEl("storeScreen");
+    showEl("loginScreen");
+  }
+}
+
+function handleUserLoggedIn(user) {
+  currentUser = user;
+  isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  hideEl("loginScreen");
+
+  if (isAdmin) {
+    hideEl("storeScreen");
+    showEl("dashboardScreen");
+    document.getElementById("adminEmailLabel").textContent = user.email;
+    initDashboard();
+  } else {
+    hideEl("dashboardScreen");
+    showEl("storeScreen");
+    document.getElementById("storeUserLabel").textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+    initStore();
+  }
+}
+
+document.getElementById("googleLoginBtn").addEventListener("click", async () => {
+  const errorEl = document.getElementById("loginError");
+  errorEl.classList.add("hidden");
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.href }
+  });
+  if (error) {
+    errorEl.textContent = "Gagal login: " + error.message;
+    errorEl.classList.remove("hidden");
+  }
+});
+
+async function doLogout() {
+  await supabaseClient.auth.signOut();
+  hideEl("dashboardScreen"); hideEl("storeScreen");
+  showEl("loginScreen");
+}
+window.doLogout = doLogout;
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_IN" && session && session.user) {
+    handleUserLoggedIn(session.user);
+  } else if (event === "SIGNED_OUT") {
+    hideEl("dashboardScreen"); hideEl("storeScreen");
+    showEl("loginScreen");
+  }
+});
+
+/* ================== ADMIN: INIT & TAB ================== */
+let dashboardInitialized = false;
+function initDashboard() {
+  if (dashboardInitialized) return;
+  dashboardInitialized = true;
+  fetchProdukAdmin();
+  fetchPesanan();
+}
+
+function switchTab(tab) {
+  const tabs = { produk: "tabProduk", pesanan: "tabPesanan", pengaturan: "tabPengaturan" };
+  const navs = { produk: "navProduk", pesanan: "navPesanan", pengaturan: "navPengaturan" };
+  Object.keys(tabs).forEach(key => {
+    document.getElementById(tabs[key]).classList.toggle("hidden", key !== tab);
+    document.getElementById(navs[key]).classList.toggle("active", key === tab);
+  });
+  if (tab === "produk") fetchProdukAdmin();
+  else if (tab === "pesanan") fetchPesanan();
+  else if (tab === "pengaturan") fetchPengaturan();
+}
+window.switchTab = switchTab;
+
+/* ================== ADMIN: PRODUK ================== */
+async function fetchProdukAdmin() {
+  showEl("loadingProdukAdmin"); hideEl("emptyProdukAdmin");
+  const tbody = document.getElementById("produkTableBody");
+  tbody.innerHTML = "";
+  try {
+    const { data, error } = await supabaseClient.from("produk").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    hideEl("loadingProdukAdmin");
+    if (!data || data.length === 0) { showEl("emptyProdukAdmin"); return; }
+    tbody.innerHTML = data.map(p => `
+      <tr class="border-b border-gray-50 fade-in">
+        <td class="py-3"><img src="${p.gambar_url || 'https://via.placeholder.com/60'}" class="w-14 h-14 rounded-lg object-cover"></td>
+        <td class="py-3 font-medium">${p.nama}</td>
+        <td class="py-3">${formatRupiah(p.harga)}</td>
+        <td class="py-3 max-w-xs truncate">${p.deskripsi || "-"}</td>
+        <td class="py-3"><button onclick="deleteProduk(${p.id})" class="btn-danger px-3 py-1.5 rounded-lg text-xs font-semibold">Hapus</button></td>
+      </tr>`).join("");
+  } catch (err) {
+    hideEl("loadingProdukAdmin");
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 py-6">Gagal memuat produk: ${err.message}</td></tr>`;
+  }
+}
+
+document.getElementById("produkForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("submitProdukBtn");
+  const nama = document.getElementById("inputNama").value.trim();
+  const harga = document.getElementById("inputHarga").value;
+  const deskripsi = document.getElementById("inputDeskripsi").value.trim();
+  const gambar = document.getElementById("inputGambar").value.trim();
+  if (!nama || !harga) return;
+  btn.disabled = true; btn.textContent = "Menyimpan...";
+  try {
+    const { error } = await supabaseClient.from("produk").insert([{ nama, harga: Number(harga), deskripsi, gambar_url: gambar }]);
+    if (error) throw error;
+    document.getElementById("produkForm").reset();
+    await fetchProdukAdmin();
+  } catch (err) {
+    alert("Gagal menambah produk: " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "+ Tambah Produk";
+  }
+});
+
+async function deleteProduk(id) {
+  if (!confirm("Yakin ingin menghapus produk ini?")) return;
+  try {
+    const { error } = await supabaseClient.from("produk").delete().eq("id", id);
+    if (error) throw error;
+    await fetchProdukAdmin();
+  } catch (err) {
+    alert("Gagal menghapus produk: " + err.message);
+  }
+}
+window.deleteProduk = deleteProduk;
+
+/* ================== ADMIN: PESANAN ================== */
+async function fetchPesanan() {
+  showEl("loadingPesanan"); hideEl("emptyPesanan");
+  const tbody = document.getElementById("pesananTableBody");
+  tbody.innerHTML = "";
+  try {
+    const { data, error } = await supabaseClient.from("pesanan").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    hideEl("loadingPesanan");
+    if (!data || data.length === 0) { showEl("emptyPesanan"); return; }
+
+    const STATUS_OPTIONS = ["Menunggu Konfirmasi", "Diproses", "Selesai", "Dibatalkan"];
+    tbody.innerHTML = data.map(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      const itemsHtml = items.map(it => `${it.nama} x${it.qty}`).join(", ");
+      const statusClass = (o.status === "Selesai") ? "status-done" : "status-pending";
+      const buktiHtml = o.bukti_bayar_url
+        ? `<a href="${o.bukti_bayar_url}" target="_blank"><img src="${o.bukti_bayar_url}" class="w-12 h-12 rounded-lg object-cover border border-gray-100"></a>`
+        : `<span class="text-brown-light text-xs">-</span>`;
+      const optionsHtml = STATUS_OPTIONS.map(s => `<option value="${s}" ${o.status === s ? "selected" : ""}>${s}</option>`).join("");
+      return `
+        <tr class="border-b border-gray-50 fade-in align-top">
+          <td class="py-3 font-medium">${o.nama_pembeli}${o.email_pembeli ? `<br><span class="text-xs text-brown-light" style="color:var(--brown-light)">${o.email_pembeli}</span>` : ""}</td>
+          <td class="py-3">${o.no_wa}</td>
+          <td class="py-3 max-w-xs">${o.alamat}</td>
+          <td class="py-3 max-w-xs">${itemsHtml || "-"}</td>
+          <td class="py-3 font-semibold">${formatRupiah(o.total_harga || 0)}</td>
+          <td class="py-3">${buktiHtml}</td>
+          <td class="py-3"><select onchange="updateStatusPesanan(${o.id}, this.value)" class="status-badge ${statusClass} border-0 focus:outline-none">${optionsHtml}</select></td>
+        </tr>`;
+    }).join("");
+  } catch (err) {
+    hideEl("loadingPesanan");
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-red-500 py-6">Gagal memuat pesanan: ${err.message}</td></tr>`;
+  }
+}
+window.fetchPesanan = fetchPesanan;
+
+async function updateStatusPesanan(id, status) {
+  try {
+    const { error } = await supabaseClient.from("pesanan").update({ status }).eq("id", id);
+    if (error) throw error;
+    await fetchPesanan();
+  } catch (err) {
+    alert("Gagal mengubah status: " + err.message);
+  }
+}
+window.updateStatusPesanan = updateStatusPesanan;
+
+/* ================== ADMIN: PENGATURAN ================== */
+async function fetchPengaturan() {
+  showEl("loadingPengaturan");
+  const form = document.getElementById("pengaturanForm");
+  form.classList.add("hidden");
+  try {
+    const { data, error } = await supabaseClient.from("pengaturan").select("*").eq("id", 1).maybeSingle();
+    if (error) throw error;
+    hideEl("loadingPengaturan"); form.classList.remove("hidden");
+    if (data) {
+      document.getElementById("inputQrisUrl").value = data.qris_url || "";
+      document.getElementById("inputInfoPembayaran").value = data.info_pembayaran || "";
+      if (data.qris_url) {
+        const preview = document.getElementById("qrisPreview");
+        preview.src = data.qris_url;
+        preview.classList.remove("hidden");
+      }
+    }
+  } catch (err) {
+    hideEl("loadingPengaturan"); form.classList.remove("hidden");
+    alert("Gagal memuat pengaturan: " + err.message);
+  }
+}
+
+document.getElementById("inputQrisUrl").addEventListener("input", (e) => {
+  const preview = document.getElementById("qrisPreview");
+  if (e.target.value.trim()) { preview.src = e.target.value.trim(); preview.classList.remove("hidden"); }
+  else preview.classList.add("hidden");
+});
+
+document.getElementById("pengaturanForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("submitPengaturanBtn");
+  const successEl = document.getElementById("pengaturanSuccess");
+  successEl.classList.add("hidden");
+  const qrisUrl = document.getElementById("inputQrisUrl").value.trim();
+  const infoPembayaran = document.getElementById("inputInfoPembayaran").value.trim();
+  btn.disabled = true; btn.textContent = "Menyimpan...";
+  try {
+    const { error } = await supabaseClient.from("pengaturan").upsert([{ id: 1, qris_url: qrisUrl, info_pembayaran: infoPembayaran }]);
+    if (error) throw error;
+    successEl.classList.remove("hidden");
+    setTimeout(() => successEl.classList.add("hidden"), 2500);
+  } catch (err) {
+    alert("Gagal menyimpan pengaturan: " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Simpan Pengaturan";
+  }
+});
+
+/* ================== STORE: INIT ================== */
+let storeInitialized = false;
+function initStore() {
+  if (storeInitialized) { renderCart(); return; }
+  storeInitialized = true;
+  renderCart();
+  fetchProduk();
+}
+
+/* ================== STORE: PRODUK ================== */
+async function fetchProduk() {
+  showEl("loadingProduk"); hideEl("emptyProduk");
+  const grid = document.getElementById("produkGrid");
+  grid.innerHTML = "";
+  try {
+    const { data, error } = await supabaseClient.from("produk").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    hideEl("loadingProduk");
+    if (!data || data.length === 0) { showEl("emptyProduk"); return; }
+    grid.innerHTML = data.map(p => `
+      <div class="card overflow-hidden fade-in flex flex-col">
+        <img src="${p.gambar_url || 'https://via.placeholder.com/300x220?text=LOVEN'}" class="w-full h-32 sm:h-40 object-cover">
+        <div class="p-3 sm:p-4 flex flex-col flex-1">
+          <h3 class="font-semibold text-sm sm:text-base leading-snug mb-1">${p.nama}</h3>
+          <p class="text-xs text-brown-light mb-2 line-clamp-2 flex-1" style="color:var(--brown-light)">${p.deskripsi || ""}</p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="font-bold text-sm">${formatRupiah(p.harga)}</span>
+            <button onclick='addToCart(${JSON.stringify({id:p.id, nama:p.nama, harga:p.harga, gambar:p.gambar_url})})' class="btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">+ Keranjang</button>
+          </div>
+        </div>
+      </div>`).join("");
+  } catch (err) {
+    hideEl("loadingProduk");
+    grid.innerHTML = `<p class="col-span-full text-center text-red-500 py-8">Gagal memuat produk: ${err.message}</p>`;
+  }
+}
+
+/* ================== STORE: KERANJANG ================== */
+const CART_KEY = "loven_cart";
+function getCart() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { return []; } }
+function saveCart(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)); renderCart(); }
+function addToCart(produk) {
+  const cart = getCart();
+  const existing = cart.find(i => i.id === produk.id);
+  if (existing) existing.qty += 1; else cart.push({ ...produk, qty: 1 });
+  saveCart(cart);
+  openCart();
+}
+window.addToCart = addToCart;
+function updateQty(id, delta) {
+  let cart = getCart();
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+  saveCart(cart);
+}
+window.updateQty = updateQty;
+function cartTotal(cart) { return cart.reduce((sum, i) => sum + i.harga * i.qty, 0); }
+
+function renderCart() {
+  const cart = getCart();
+  const wrap = document.getElementById("cartItemsWrap");
+  const badge = document.getElementById("cartBadge");
+  const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+  if (totalQty > 0) { badge.textContent = totalQty; showEl("cartBadge"); } else { hideEl("cartBadge"); }
+  if (cart.length === 0) { wrap.innerHTML = ""; showEl("cartEmptyMsg"); }
+  else {
+    hideEl("cartEmptyMsg");
+    wrap.innerHTML = cart.map(i => `
+      <div class="flex gap-3 items-center">
+        <img src="${i.gambar || 'https://via.placeholder.com/60'}" class="w-14 h-14 rounded-lg object-cover">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium truncate">${i.nama}</p>
+          <p class="text-xs text-brown-light" style="color:var(--brown-light)">${formatRupiah(i.harga)}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="updateQty(${i.id}, -1)" class="w-7 h-7 rounded-full border border-gray-200 text-sm">-</button>
+          <span class="text-sm w-4 text-center">${i.qty}</span>
+          <button onclick="updateQty(${i.id}, 1)" class="w-7 h-7 rounded-full border border-gray-200 text-sm">+</button>
+        </div>
+      </div>`).join("");
+  }
+  const total = cartTotal(cart);
+  document.getElementById("cartTotal").textContent = formatRupiah(total);
+  document.getElementById("ckTotal").textContent = formatRupiah(total);
+}
+
+function openCart() { showEl("cartOverlay"); document.getElementById("cartDrawer").classList.remove("closed"); }
+function closeCart() { hideEl("cartOverlay"); document.getElementById("cartDrawer").classList.add("closed"); }
+window.closeCart = closeCart;
+document.getElementById("cartBtn").addEventListener("click", openCart);
+
+/* ================== STORE: CHECKOUT ================== */
+document.getElementById("checkoutBtn").addEventListener("click", () => {
+  if (getCart().length === 0) return;
+  closeCart();
+  showEl("checkoutStep1"); hideEl("checkoutStep2"); hideEl("checkoutStep3");
+  document.getElementById("ckTotal").textContent = formatRupiah(cartTotal(getCart()));
+  openModal("checkoutModal");
+});
+
+function backToStep1() { showEl("checkoutStep1"); hideEl("checkoutStep2"); }
+window.backToStep1 = backToStep1;
+
+let pendingOrder = null;
+
+document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  pendingOrder = {
+    nama_pembeli: document.getElementById("ckNama").value.trim(),
+    no_wa: document.getElementById("ckWa").value.trim(),
+    alamat: document.getElementById("ckAlamat").value.trim()
+  };
+  hideEl("checkoutStep1"); showEl("checkoutStep2");
+  await loadPaymentInfo();
+});
+
+async function loadPaymentInfo() {
+  const wrap = document.getElementById("paymentInfoWrap");
+  wrap.innerHTML = `<div class="py-6"><div class="loader"></div></div>`;
+  try {
+    const { data, error } = await supabaseClient.from("pengaturan").select("*").eq("id", 1).maybeSingle();
+    if (error) throw error;
+    let html = "";
+    if (data && data.qris_url) {
+      html += `<div class="text-center mb-4">
+        <img src="${data.qris_url}" class="w-48 h-48 object-contain mx-auto border border-gray-100 rounded-lg p-2">
+        <p class="text-xs text-brown-light mt-2" style="color:var(--brown-light)">Scan QRIS untuk membayar</p>
+      </div>`;
+    }
+    if (data && data.info_pembayaran) {
+      html += `<div class="bg-[#fdf6ec] rounded-lg p-4 text-sm whitespace-pre-line">${data.info_pembayaran}</div>`;
+    }
+    if (!html) html = `<p class="text-sm text-brown-light text-center" style="color:var(--brown-light)">Info pembayaran belum tersedia. Hubungi admin via WhatsApp.</p>`;
+    wrap.innerHTML = html;
+  } catch (err) {
+    wrap.innerHTML = `<p class="text-red-500 text-sm text-center">Gagal memuat info pembayaran: ${err.message}</p>`;
+  }
+}
+
+document.getElementById("buktiForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  hideEl("checkoutError");
+  const btn = document.getElementById("buktiSubmitBtn");
+  const file = document.getElementById("buktiFile").files[0];
+  if (!file) return;
+  btn.disabled = true; btn.textContent = "Mengirim...";
+  try {
+    const cart = getCart();
+    if (cart.length === 0) throw new Error("Keranjang kosong.");
+    const ext = file.name.split(".").pop();
+    const path = `${currentUser.id}/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabaseClient.storage.from(BUKTI_BUCKET).upload(path, file);
+    if (uploadError) throw uploadError;
+    const { data: publicUrlData } = supabaseClient.storage.from(BUKTI_BUCKET).getPublicUrl(path);
+    const buktiUrl = publicUrlData.publicUrl;
+
+    const items = cart.map(i => ({ nama: i.nama, harga: i.harga, qty: i.qty }));
+    const total = cartTotal(cart);
+
+    const { error: insertError } = await supabaseClient.from("pesanan").insert([{
+      user_id: currentUser.id,
+      email_pembeli: currentUser.email,
+      nama_pembeli: pendingOrder.nama_pembeli,
+      no_wa: pendingOrder.no_wa,
+      alamat: pendingOrder.alamat,
+      items: items,
+      total_harga: total,
+      bukti_bayar_url: buktiUrl,
+      status: "Menunggu Konfirmasi"
+    }]);
+    if (insertError) throw insertError;
+
+    saveCart([]);
+    document.getElementById("buktiForm").reset();
+    hideEl("checkoutStep2"); showEl("checkoutStep3");
+  } catch (err) {
+    document.getElementById("checkoutError").textContent = "Gagal mengirim pesanan: " + err.message;
+    showEl("checkoutError");
+  } finally {
+    btn.disabled = false; btn.textContent = "Kirim Pesanan";
+  }
+});
+
+/* ================== STORE: PESANAN SAYA ================== */
+document.getElementById("myOrdersBtn").addEventListener("click", async () => {
+  openModal("ordersModal");
+  await fetchMyOrders();
+});
+
+function statusClass(status) {
+  if (status === "Selesai") return "status-done";
+  if (status === "Diproses") return "status-process";
+  if (status === "Dibatalkan") return "status-cancel";
+  return "status-pending";
+}
+
+async function fetchMyOrders() {
+  showEl("loadingMyOrders"); hideEl("emptyMyOrders");
+  const list = document.getElementById("myOrdersList");
+  list.innerHTML = "";
+  try {
+    const { data, error } = await supabaseClient.from("pesanan").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false });
+    if (error) throw error;
+    hideEl("loadingMyOrders");
+    if (!data || data.length === 0) { showEl("emptyMyOrders"); return; }
+    list.innerHTML = data.map(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      const itemsHtml = items.map(it => `${it.nama} x${it.qty}`).join(", ");
+      return `
+        <div class="border border-gray-100 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-brown-light" style="color:var(--brown-light)">${new Date(o.created_at).toLocaleString("id-ID")}</span>
+            <span class="status-badge ${statusClass(o.status)}">${o.status || "Menunggu Konfirmasi"}</span>
+          </div>
+          <p class="text-sm mb-1">${itemsHtml || "-"}</p>
+          <p class="font-semibold text-sm">${formatRupiah(o.total_harga || 0)}</p>
+        </div>`;
+    }).join("");
+  } catch (err) {
+    hideEl("loadingMyOrders");
+    list.innerHTML = `<p class="text-center text-red-500 py-6">Gagal memuat pesanan: ${err.message}</p>`;
+  }
+}
+
+/* ================== JALANKAN ================== */
+checkSession();
+
+} // end runApp
+</script>
+</body>
+</html>
