@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOVEN Admin | Dashboard</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          cream: '#FFF8F1',
+          blush: '#FADCE9',
+          rose: '#F3B6CE',
+          rosedeep: '#E28FAE',
+          cocoa: '#6B4226',
+          cocoalight: '#8A5A3B',
+          slateink: '#3F3A3A',
+        },
+        fontFamily: {
+          display: ['"Fraunces"', 'serif'],
+          body: ['"Poppins"', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Supabase JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
+  body { font-family: 'Poppins', sans-serif; background-color: #FDF6F0; }
+  .font-display { font-family: 'Fraunces', serif; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #F3B6CE; border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: #FDF6F0; }
+
+  .btn-primary {
+    background-color: #E28FAE;
+    color: #fff;
+    transition: background-color 0.25s ease, transform 0.2s ease;
+  }
+  .btn-primary:hover { background-color: #D8749A; transform: translateY(-1px); }
+
+  .sidebar-link.active {
+    background-color: #FADCE9;
+    color: #E28FAE;
+    font-weight: 600;
+  }
+
+  #sidebar { transition: transform 0.3s ease; }
+
+  .fade-in { animation: fadeIn 0.4s ease both; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .loader-dot { animation: bounceDot 1s infinite ease-in-out; }
+  .loader-dot:nth-child(2) { animation-delay: 0.15s; }
+  .loader-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounceDot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  table thead th { position: sticky; top: 0; background: #FFF; }
+
+  .status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body class="text-slateink">
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blush via-rose/40 to-cream px-4">
+  <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 md:p-10 text-center fade-in">
+    <p class="font-display text-3xl font-700 text-rosedeep mb-1">LOVEN</p>
+    <p class="text-xs uppercase tracking-widest text-cocoalight mb-8">Admin Dashboard</p>
+
+    <div class="w-16 h-16 mx-auto rounded-full bg-blush flex items-center justify-center mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-rosedeep" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+    </div>
+
+    <h1 class="font-display text-xl font-600 mb-2">Masuk ke Dashboard</h1>
+    <p class="text-sm text-cocoalight mb-6">Khusus untuk admin LOVEN. Silakan masuk menggunakan akun Google terdaftar.</p>
+
+    <button id="googleLoginBtn" class="w-full flex items-center justify-center gap-3 border-2 border-rose/60 rounded-full py-3 font-semibold hover:bg-blush/50 transition-colors">
+      <svg class="h-5 w-5" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.63h6.47c-.28 1.5-1.13 2.77-2.4 3.62v3h3.89c2.27-2.09 3.56-5.17 3.56-8.8z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.92l-3.89-3c-1.08.72-2.46 1.15-4.06 1.15-3.12 0-5.77-2.11-6.72-4.94H1.27v3.1C3.25 21.3 7.31 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.28 14.29a7.2 7.2 0 010-4.58v-3.1H1.27a12 12 0 000 10.78l4.01-3.1z"/>
+        <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.61 4.58 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.61l4.01 3.1C6.23 6.87 8.88 4.75 12 4.75z"/>
+      </svg>
+      Masuk dengan Google
+    </button>
+
+    <p id="loginError" class="hidden mt-5 text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-3"></p>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD (hidden until authenticated) ================= -->
+<div id="dashboard" class="hidden min-h-screen flex">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="fixed md:static z-30 inset-y-0 left-0 w-64 bg-white border-r border-rose/30 flex flex-col -translate-x-full md:translate-x-0">
+    <div class="px-6 py-6 border-b border-rose/20">
+      <p class="font-display text-2xl font-700 text-rosedeep">LOVEN</p>
+      <p class="text-xs text-cocoalight">Admin Panel</p>
+    </div>
+    <nav class="flex-1 px-3 py-5 space-y-1">
+      <button onclick="switchTab('produk')" data-tab="produk" class="sidebar-link active w-full text-left px-4 py-2.5 rounded-xl text-sm flex items-center gap-3 hover:bg-blush/60 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
+        Kelola Produk
+      </button>
+      <button onclick="switchTab('pesanan')" data-tab="pesanan" class="sidebar-link w-full text-left px-4 py-2.5 rounded-xl text-sm flex items-center gap-3 hover:bg-blush/60 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M3.75 6.75h16.5M3.75 6.75v10.5A2.25 2.25 0 006 19.5h12a2.25 2.25 0 002.25-2.25V6.75M3.75 6.75L12 3l8.25 3.75" /></svg>
+        Pesanan Masuk
+      </button>
+    </nav>
+    <div class="px-4 py-5 border-t border-rose/20">
+      <div class="flex items-center gap-3 mb-4 px-1">
+        <img id="adminAvatar" src="" class="w-9 h-9 rounded-full bg-blush">
+        <div class="min-w-0">
+          <p id="adminName" class="text-sm font-semibold truncate">Admin</p>
+          <p id="adminEmail" class="text-xs text-cocoalight truncate"></p>
+        </div>
+      </div>
+      <button onclick="logout()" class="w-full text-sm font-semibold text-red-500 border-2 border-red-200 rounded-xl py-2 hover:bg-red-50 transition-colors">Keluar</button>
+    </div>
+  </aside>
+
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-20 hidden md:hidden" onclick="toggleSidebar(false)"></div>
+
+  <!-- MAIN -->
+  <main class="flex-1 min-w-0">
+    <!-- TOPBAR -->
+    <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-rose/20 px-4 md:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar(true)" class="md:hidden p-2 rounded-lg hover:bg-blush">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+        </button>
+        <h2 id="pageTitle" class="font-display text-lg md:text-2xl font-700 text-cocoa">Kelola Produk</h2>
+      </div>
+    </header>
+
+    <div class="p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
+
+      <!-- ===== TAB PRODUK ===== -->
+      <section id="tabProduk" class="space-y-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-rose/20 p-5 md:p-6">
+          <h3 class="font-display text-lg font-600 mb-4">Tambah Produk Baru</h3>
+          <form id="productForm" onsubmit="addProduct(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium">Nama Kue</label>
+              <input required id="pNama" type="text" placeholder="Contoh: Red Velvet Cake" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-rose/50 focus:outline-none focus:ring-2 focus:ring-rosedeep bg-cream/40">
+            </div>
+            <div>
+              <label class="text-sm font-medium">Harga (Rp)</label>
+              <input required id="pHarga" type="number" min="0" placeholder="75000" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-rose/50 focus:outline-none focus:ring-2 focus:ring-rosedeep bg-cream/40">
+            </div>
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium">Deskripsi</label>
+              <textarea id="pDeskripsi" rows="2" placeholder="Deskripsi singkat kue" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-rose/50 focus:outline-none focus:ring-2 focus:ring-rosedeep bg-cream/40"></textarea>
+            </div>
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium">URL Gambar Kue</label>
+              <input required id="pGambar" type="url" placeholder="https://..." class="mt-1 w-full px-4 py-2.5 rounded-xl border border-rose/50 focus:outline-none focus:ring-2 focus:ring-rosedeep bg-cream/40">
+            </div>
+            <div class="md:col-span-2">
+              <button id="addProductBtn" type="submit" class="btn-primary px-6 py-2.5 rounded-full font-semibold">+ Tambah Produk</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-rose/20 p-5 md:p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-display text-lg font-600">Daftar Produk</h3>
+            <span id="productCount" class="text-xs bg-blush text-rosedeep px-3 py-1 rounded-full font-semibold">0 item</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm min-w-[640px]">
+              <thead>
+                <tr class="text-left text-cocoalight border-b border-rose/20">
+                  <th class="py-2 pr-3 font-semibold">Gambar</th>
+                  <th class="py-2 pr-3 font-semibold">Nama</th>
+                  <th class="py-2 pr-3 font-semibold">Harga</th>
+                  <th class="py-2 pr-3 font-semibold">Deskripsi</th>
+                  <th class="py-2 pr-3 font-semibold text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="productTableBody"></tbody>
+            </table>
+          </div>
+          <p id="productEmptyMsg" class="hidden text-center text-cocoalight py-10 text-sm">Belum ada produk. Tambahkan produk pertamamu di atas.</p>
+        </div>
+      </section>
+
+      <!-- ===== TAB PESANAN ===== -->
+      <section id="tabPesanan" class="hidden space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-rose/20 p-5 md:p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-display text-lg font-600">Pesanan Masuk</h3>
+            <span id="orderCount" class="text-xs bg-blush text-rosedeep px-3 py-1 rounded-full font-semibold">0 pesanan</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm min-w-[760px]">
+              <thead>
+                <tr class="text-left text-cocoalight border-b border-rose/20">
+                  <th class="py-2 pr-3 font-semibold">Waktu</th>
+                  <th class="py-2 pr-3 font-semibold">Nama Pembeli</th>
+                  <th class="py-2 pr-3 font-semibold">No. WA</th>
+                  <th class="py-2 pr-3 font-semibold">Alamat</th>
+                  <th class="py-2 pr-3 font-semibold">Item</th>
+                  <th class="py-2 pr-3 font-semibold">Total</th>
+                  <th class="py-2 pr-3 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody id="orderTableBody"></tbody>
+            </table>
+          </div>
+          <p id="orderEmptyMsg" class="hidden text-center text-cocoalight py-10 text-sm">Belum ada pesanan masuk.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ================= TOAST ================= -->
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-cocoa text-cream px-5 py-3 rounded-full shadow-xl text-sm font-medium opacity-0 pointer-events-none transition-opacity duration-300 z-[70]"></div>
+
+<script>
+  /* ==================== KONFIGURASI SUPABASE ==================== */
+  const SUPABASE_URL = "URL_SUPABASE";
+  const SUPABASE_ANON_KEY = "ANON_KEY_SUPABASE";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  /* Email admin yang diizinkan mengakses dashboard */
+  const ALLOWED_ADMIN_EMAIL = "email-admin-anda@gmail.com";
+
+  let PRODUCTS = [];
+  let ORDERS = [];
+  let ordersChannel = null;
+
+  /* ==================== UTIL ==================== */
+  function formatRupiah(num) {
+    return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
+  }
+
+  function formatTanggal(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.remove('opacity-0');
+    t.classList.add('opacity-100');
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => {
+      t.classList.remove('opacity-100');
+      t.classList.add('opacity-0');
+    }, 2200);
+  }
+
+  /* ==================== AUTH ==================== */
+  document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+    if (error) {
+      showLoginError('Gagal memulai proses login Google. Coba lagi.');
+      console.error(error);
+    }
+  });
+
+  function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+  async function checkSession() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    handleSession(session);
+  }
+
+  async function handleSession(session) {
+    if (!session || !session.user) {
+      showLogin();
+      return;
+    }
+
+    const email = session.user.email;
+    if (email !== ALLOWED_ADMIN_EMAIL) {
+      showLoginError(`Email "${email}" tidak memiliki akses admin. Silakan gunakan akun yang terdaftar.`);
+      await supabaseClient.auth.signOut();
+      showLogin();
+      return;
+    }
+
+    document.getElementById('adminName').textContent = session.user.user_metadata?.full_name || session.user.email;
+    document.getElementById('adminEmail').textContent = session.user.email;
+    document.getElementById('adminAvatar').src = session.user.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?background=FADCE9&color=E28FAE&name=' + encodeURIComponent(session.user.email);
+
+    showDashboard();
+    loadProducts();
+    loadOrders();
+    subscribeOrdersRealtime();
+  }
+
+  function showLogin() {
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('dashboard').classList.add('hidden');
+  }
+
+  function showDashboard() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('dashboard').classList.add('flex');
+  }
+
+  async function logout() {
+    if (ordersChannel) {
+      supabaseClient.removeChannel(ordersChannel);
+      ordersChannel = null;
+    }
+    await supabaseClient.auth.signOut();
+    showLogin();
+    document.getElementById('loginError').classList.add('hidden');
+  }
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    handleSession(session);
+  });
+
+  /* ==================== SIDEBAR (mobile) ==================== */
+  function toggleSidebar(open) {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (open) {
+      sidebar.classList.remove('-translate-x-full');
+      overlay.classList.remove('hidden');
+    } else {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+    }
+  }
+
+  /* ==================== TAB SWITCH ==================== */
+  function switchTab(tab) {
+    document.querySelectorAll('.sidebar-link').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.getElementById('tabProduk').classList.toggle('hidden', tab !== 'produk');
+    document.getElementById('tabPesanan').classList.toggle('hidden', tab !== 'pesanan');
+    document.getElementById('pageTitle').textContent = tab === 'produk' ? 'Kelola Produk' : 'Pesanan Masuk';
+    toggleSidebar(false);
+  }
+
+  /* ==================== PRODUK: LOAD ==================== */
+  async function loadProducts() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('produk')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      PRODUCTS = data || [];
+      renderProductTable();
+    } catch (err) {
+      console.error('Gagal memuat produk:', err);
+      showToast('Gagal memuat data produk.');
+    }
+  }
+
+  function renderProductTable() {
+    const tbody = document.getElementById('productTableBody');
+    const emptyMsg = document.getElementById('productEmptyMsg');
+    document.getElementById('productCount').textContent = `${PRODUCTS.length} item`;
+
+    if (PRODUCTS.length === 0) {
+      tbody.innerHTML = '';
+      emptyMsg.classList.remove('hidden');
+      return;
+    }
+    emptyMsg.classList.add('hidden');
+
+    tbody.innerHTML = PRODUCTS.map(p => `
+      <tr class="border-b border-rose/10 fade-in">
+        <td class="py-2.5 pr-3">
+          <img src="${p.gambar_url || p.image_url || ''}" class="w-12 h-12 rounded-lg object-cover bg-blush/40" onerror="this.src='https://images.unsplash.com/photo-1486427944299-d1955d23e34d?q=80&w=200&auto=format&fit=crop'">
+        </td>
+        <td class="py-2.5 pr-3 font-medium">${escapeHtml(p.nama)}</td>
+        <td class="py-2.5 pr-3 text-rosedeep font-semibold">${formatRupiah(p.harga)}</td>
+        <td class="py-2.5 pr-3 text-cocoalight max-w-[220px] truncate">${escapeHtml(p.deskripsi || '-')}</td>
+        <td class="py-2.5 pr-3 text-right">
+          <button onclick="deleteProduct('${p.id}')" class="text-xs font-semibold text-red-500 border border-red-200 rounded-full px-3 py-1.5 hover:bg-red-50 transition-colors">Hapus</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  /* ==================== PRODUK: TAMBAH ==================== */
+  async function addProduct(e) {
+    e.preventDefault();
+    const btn = document.getElementById('addProductBtn');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    const nama = document.getElementById('pNama').value.trim();
+    const harga = Number(document.getElementById('pHarga').value);
+    const deskripsi = document.getElementById('pDeskripsi').value.trim();
+    const gambar_url = document.getElementById('pGambar').value.trim();
+
+    try {
+      const { error } = await supabaseClient
+        .from('produk')
+        .insert([{ nama, harga, deskripsi, gambar_url }]);
+
+      if (error) throw error;
+
+      showToast('Produk berhasil ditambahkan!');
+      document.getElementById('productForm').reset();
+      loadProducts();
+    } catch (err) {
+      console.error('Gagal menambah produk:', err);
+      showToast('Gagal menambahkan produk.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '+ Tambah Produk';
+    }
+  }
+
+  /* ==================== PRODUK: HAPUS ==================== */
+  async function deleteProduct(id) {
+    if (!confirm('Yakin ingin menghapus produk ini?')) return;
+    try {
+      const { error } = await supabaseClient.from('produk').delete().eq('id', id);
+      if (error) throw error;
+      showToast('Produk dihapus.');
+      loadProducts();
+    } catch (err) {
+      console.error('Gagal menghapus produk:', err);
+      showToast('Gagal menghapus produk.');
+    }
+  }
+
+  /* ==================== PESANAN: LOAD ==================== */
+  async function loadOrders() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('pesanan')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      ORDERS = data || [];
+      renderOrderTable();
+    } catch (err) {
+      console.error('Gagal memuat pesanan:', err);
+      showToast('Gagal memuat data pesanan.');
+    }
+  }
+
+  function statusColor(status) {
+    const s = (status || '').toLowerCase();
+    if (s.includes('selesai') || s.includes('kirim')) return 'background:#DCFCE7;color:#16A34A;';
+    if (s.includes('proses')) return 'background:#DBEAFE;color:#2563EB;';
+    if (s.includes('batal')) return 'background:#FEE2E2;color:#DC2626;';
+    return 'background:#FEF3C7;color:#D97706;';
+  }
+
+  function renderOrderTable() {
+    const tbody = document.getElementById('orderTableBody');
+    const emptyMsg = document.getElementById('orderEmptyMsg');
+    document.getElementById('orderCount').textContent = `${ORDERS.length} pesanan`;
+
+    if (ORDERS.length === 0) {
+      tbody.innerHTML = '';
+      emptyMsg.classList.remove('hidden');
+      return;
+    }
+    emptyMsg.classList.add('hidden');
+
+    tbody.innerHTML = ORDERS.map(o => {
+      let items = o.items;
+      if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch (e) { items = []; }
+      }
+      const itemsHtml = Array.isArray(items)
+        ? items.map(it => `${escapeHtml(it.nama)} x${it.qty}`).join(', ')
+        : '-';
+
+      return `
+        <tr class="border-b border-rose/10 align-top fade-in">
+          <td class="py-2.5 pr-3 whitespace-nowrap text-cocoalight">${formatTanggal(o.created_at)}</td>
+          <td class="py-2.5 pr-3 font-medium">${escapeHtml(o.nama_pembeli)}</td>
+          <td class="py-2.5 pr-3">
+            <a href="https://wa.me/${(o.no_wa || '').replace(/[^0-9]/g,'')}" target="_blank" class="text-rosedeep hover:underline">${escapeHtml(o.no_wa)}</a>
+          </td>
+          <td class="py-2.5 pr-3 max-w-[180px] truncate" title="${escapeHtml(o.alamat)}">${escapeHtml(o.alamat)}</td>
+          <td class="py-2.5 pr-3 max-w-[220px]">${itemsHtml}</td>
+          <td class="py-2.5 pr-3 font-semibold text-rosedeep whitespace-nowrap">${formatRupiah(o.total)}</td>
+          <td class="py-2.5 pr-3">
+            <span class="status-badge" style="${statusColor(o.status)}">${escapeHtml(o.status || 'Menunggu')}</span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  /* ==================== PESANAN: REALTIME ==================== */
+  function subscribeOrdersRealtime() {
+    if (ordersChannel) return;
+    ordersChannel = supabaseClient
+      .channel('pesanan-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pesanan' }, () => {
+        loadOrders();
+      })
+      .subscribe();
+  }
+
+  /* ==================== INIT ==================== */
+  document.addEventListener('DOMContentLoaded', checkSession);
+</script>
+</body>
+</html>

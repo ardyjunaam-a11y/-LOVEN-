@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOVEN | Toko Kue Estetik</title>
+<meta name="description" content="LOVEN - Toko kue premium dengan cita rasa manis dan tampilan yang memikat.">
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          cream: '#FFF8F1',
+          blush: '#FADCE9',
+          rose: '#F3B6CE',
+          rosedeep: '#E28FAE',
+          cocoa: '#6B4226',
+          cocoalight: '#8A5A3B',
+          gold: '#D8AE7E',
+        },
+        fontFamily: {
+          display: ['"Fraunces"', 'serif'],
+          body: ['"Poppins"', 'sans-serif'],
+        },
+        borderRadius: {
+          blob: '40% 60% 60% 40% / 50% 40% 60% 50%',
+        }
+      }
+    }
+  }
+</script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Supabase JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
+  body { font-family: 'Poppins', sans-serif; background-color: #FFF8F1; }
+  .font-display { font-family: 'Fraunces', serif; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #F3B6CE; border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: #FFF8F1; }
+
+  .scallop-bottom {
+    position: relative;
+  }
+  .scallop-bottom::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-image: radial-gradient(circle at 10px 0, transparent 12px, #FFF8F1 13px);
+    background-size: 40px 40px;
+    background-repeat: repeat-x;
+  }
+
+  .card-cake {
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+  }
+  .card-cake:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 35px -15px rgba(226, 143, 174, 0.45);
+  }
+
+  .btn-primary {
+    background-color: #E28FAE;
+    color: #fff;
+    transition: background-color 0.25s ease, transform 0.2s ease;
+  }
+  .btn-primary:hover { background-color: #D8749A; transform: translateY(-2px); }
+
+  .btn-outline {
+    border: 2px solid #E28FAE;
+    color: #E28FAE;
+    transition: all 0.25s ease;
+  }
+  .btn-outline:hover { background-color: #E28FAE; color: #fff; }
+
+  #mobileMenu { transition: max-height 0.35s ease, opacity 0.3s ease; overflow: hidden; }
+
+  .modal-backdrop {
+    background: rgba(107, 66, 38, 0.45);
+    backdrop-filter: blur(3px);
+  }
+
+  .cart-panel {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .badge-pulse { animation: pulseBadge 0.4s ease; }
+  @keyframes pulseBadge {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+  }
+
+  .fade-in { animation: fadeIn 0.5s ease both; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .loader-dot { animation: bounceDot 1s infinite ease-in-out; }
+  .loader-dot:nth-child(2) { animation-delay: 0.15s; }
+  .loader-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounceDot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body class="text-cocoa">
+
+<!-- ================= NAVBAR ================= -->
+<header class="sticky top-0 z-40 bg-cream/90 backdrop-blur-md border-b border-rose/40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16 md:h-20">
+      <a href="#home" class="font-display text-2xl md:text-3xl font-700 text-rosedeep tracking-wide">LOVEN</a>
+
+      <nav class="hidden md:flex items-center gap-8 font-medium text-sm">
+        <a href="#home" class="hover:text-rosedeep transition-colors">Beranda</a>
+        <a href="#menu" class="hover:text-rosedeep transition-colors">Menu</a>
+        <a href="#tentang" class="hover:text-rosedeep transition-colors">Tentang</a>
+        <a href="#kontak" class="hover:text-rosedeep transition-colors">Kontak</a>
+      </nav>
+
+      <div class="flex items-center gap-3 md:gap-4">
+        <button id="cartBtn" class="relative p-2 rounded-full hover:bg-blush transition-colors" aria-label="Keranjang">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cocoa" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.87-4.913 2.13-7.478.075-.75-.483-1.397-1.238-1.397H5.106M7.5 14.25L5.106 5.396M7.5 14.25L5.25 18m12.75-3.75L18.75 18M9 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm9.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+          </svg>
+          <span id="cartBadge" class="absolute -top-1 -right-1 bg-rosedeep text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+        </button>
+
+        <button id="menuToggle" class="md:hidden p-2 rounded-full hover:bg-blush transition-colors" aria-label="Menu">
+          <svg id="iconOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+          <svg id="iconClose" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="mobileMenu" class="md:hidden max-h-0 opacity-0">
+      <nav class="flex flex-col gap-1 pb-4 font-medium text-sm">
+        <a href="#home" class="px-3 py-2 rounded-lg hover:bg-blush transition-colors">Beranda</a>
+        <a href="#menu" class="px-3 py-2 rounded-lg hover:bg-blush transition-colors">Menu</a>
+        <a href="#tentang" class="px-3 py-2 rounded-lg hover:bg-blush transition-colors">Tentang</a>
+        <a href="#kontak" class="px-3 py-2 rounded-lg hover:bg-blush transition-colors">Kontak</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section id="home" class="relative bg-gradient-to-b from-blush via-rose/70 to-cream scallop-bottom pt-14 pb-24 md:pt-20 md:pb-32">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center gap-10">
+    <div class="flex-1 text-center md:text-left fade-in">
+      <span class="inline-block bg-white/70 text-rosedeep text-xs md:text-sm font-semibold px-4 py-1.5 rounded-full mb-4 tracking-wide">Toko Kue Premium</span>
+      <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-700 leading-tight text-cocoa">
+        Manisnya Cinta <br class="hidden sm:block"> dalam Setiap <span class="text-rosedeep italic">Gigitan</span>
+      </h1>
+      <p class="mt-5 text-base md:text-lg text-cocoalight max-w-md mx-auto md:mx-0">
+        Selamat datang di LOVEN — kue-kue dibuat dengan bahan pilihan dan sentuhan hati, sempurna untuk setiap momen bahagiamu.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+        <a href="#menu" class="btn-primary px-8 py-3 rounded-full font-semibold shadow-lg shadow-rose/40 text-center">Lihat Menu</a>
+        <a href="#tentang" class="btn-outline px-8 py-3 rounded-full font-semibold text-center">Tentang Kami</a>
+      </div>
+    </div>
+    <div class="flex-1 flex justify-center fade-in">
+      <div class="relative w-56 h-56 sm:w-72 sm:h-72 md:w-96 md:h-96 rounded-blob overflow-hidden shadow-2xl border-8 border-white">
+        <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=800&auto=format&fit=crop" alt="Kue LOVEN" class="w-full h-full object-cover">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= KATALOG ================= -->
+<section id="menu" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+  <div class="text-center max-w-xl mx-auto mb-12">
+    <span class="text-rosedeep font-semibold tracking-widest text-xs uppercase">Menu Kami</span>
+    <h2 class="font-display text-3xl md:text-4xl font-700 mt-2">Katalog Kue LOVEN</h2>
+    <p class="text-cocoalight mt-3 text-sm md:text-base">Pilih kue favoritmu, dipanggang segar setiap hari dengan penuh cinta.</p>
+  </div>
+
+  <div id="loadingState" class="flex justify-center items-center gap-2 py-16">
+    <span class="loader-dot w-3 h-3 rounded-full bg-rosedeep"></span>
+    <span class="loader-dot w-3 h-3 rounded-full bg-rosedeep"></span>
+    <span class="loader-dot w-3 h-3 rounded-full bg-rosedeep"></span>
+  </div>
+
+  <div id="emptyState" class="hidden text-center py-16 text-cocoalight">
+    <p class="text-lg">Belum ada kue yang tersedia saat ini. Silakan cek kembali nanti ✨</p>
+  </div>
+
+  <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8"></div>
+</section>
+
+<!-- ================= TENTANG ================= -->
+<section id="tentang" class="bg-blush/50 py-16 md:py-24">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <span class="text-rosedeep font-semibold tracking-widest text-xs uppercase">Cerita Kami</span>
+    <h2 class="font-display text-3xl md:text-4xl font-700 mt-2 mb-5">Kenapa Memilih LOVEN?</h2>
+    <p class="text-cocoalight text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+      LOVEN lahir dari kecintaan pada seni memanggang. Setiap kue kami dibuat dari bahan-bahan segar pilihan, tanpa pengawet, dan dikemas dengan estetika yang manis — sama seperti rasanya. Kami percaya, kue terbaik adalah kue yang dibuat dengan hati.
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12">
+      <div class="bg-white rounded-2xl p-6 shadow-md">
+        <p class="font-display text-3xl text-rosedeep font-700">100%</p>
+        <p class="text-sm text-cocoalight mt-1">Bahan Pilihan</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-md">
+        <p class="font-display text-3xl text-rosedeep font-700">500+</p>
+        <p class="text-sm text-cocoalight mt-1">Pesanan Terkirim</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-md">
+        <p class="font-display text-3xl text-rosedeep font-700">4.9★</p>
+        <p class="text-sm text-cocoalight mt-1">Rating Pelanggan</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER / KONTAK ================= -->
+<footer id="kontak" class="bg-cocoa text-cream/90 py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between gap-8">
+    <div>
+      <p class="font-display text-2xl font-700 text-blush">LOVEN</p>
+      <p class="text-sm mt-2 max-w-xs text-cream/70">Toko kue premium dengan rasa manis dan tampilan memikat, dibuat khusus untukmu.</p>
+    </div>
+    <div class="text-sm space-y-1 text-cream/70">
+      <p>📍 Jl. Manis Indah No. 8, Indonesia</p>
+      <p>📞 +62 812-3456-7890</p>
+      <p>✉️ hello@loven.id</p>
+    </div>
+  </div>
+  <p class="text-center text-xs text-cream/50 mt-8">© 2026 LOVEN. Semua hak dilindungi.</p>
+</footer>
+
+<!-- ================= FLOATING CART BUTTON (mobile helper) ================= -->
+
+<!-- ================= CART MODAL ================= -->
+<div id="cartOverlay" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 modal-backdrop" onclick="closeCart()"></div>
+  <div id="cartPanel" class="cart-panel absolute right-0 top-0 h-full w-full sm:w-[420px] bg-cream shadow-2xl flex flex-col translate-x-full">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-rose/30">
+      <h3 class="font-display text-xl font-700 text-rosedeep">Keranjang Saya</h3>
+      <button onclick="closeCart()" class="p-2 rounded-full hover:bg-blush">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <div id="cartItemsWrap" class="flex-1 overflow-y-auto px-5 py-4 space-y-4"></div>
+
+    <div id="cartEmptyMsg" class="hidden flex-1 flex items-center justify-center text-center text-cocoalight px-6">
+      Keranjangmu masih kosong. Yuk pilih kue favoritmu! 🍰
+    </div>
+
+    <div class="border-t border-rose/30 px-5 py-4">
+      <div class="flex justify-between mb-4 font-semibold text-cocoa">
+        <span>Total</span>
+        <span id="cartTotal">Rp 0</span>
+      </div>
+      <button id="checkoutBtn" onclick="openCheckout()" class="btn-primary w-full py-3 rounded-full font-semibold shadow-md">Pesan Sekarang</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CHECKOUT MODAL ================= -->
+<div id="checkoutOverlay" class="fixed inset-0 z-50 hidden items-center justify-center px-4">
+  <div class="absolute inset-0 modal-backdrop" onclick="closeCheckout()"></div>
+  <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display text-2xl font-700 text-rosedeep">Checkout</h3>
+      <button onclick="closeCheckout()" class="p-2 rounded-full hover:bg-blush">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form id="checkoutForm" class="space-y-4" onsubmit="submitOrder(event)">
+      <div>
+        <label class="text-sm font-medium text-cocoa">Nama Lengkap</label>
+        <input required id="inputNama" type="text" placeholder="Nama kamu" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-rose/50 focus:outline-none focus:ring-2 focus:ring-rosedeep bg-cream/40">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-cocoa">Nomor WhatsApp</label>
+        <input required id="inputWA" type="tel" placeholder="08xxxxxxxxxx" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-rose/50 focus:outline-none focus:ring-2 focus:ring-rosedeep bg-cream/40">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-cocoa">Alamat Pengiriman</label>
+        <textarea required id="inputAlamat" rows="3" placeholder="Alamat lengkap" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-rose/50 focus:outline-none focus:ring-2 focus:ring-rosedeep bg-cream/40"></textarea>
+      </div>
+
+      <div class="bg-blush/40 rounded-xl p-4 text-sm">
+        <div class="flex justify-between font-semibold text-cocoa">
+          <span>Total Pesanan</span>
+          <span id="checkoutTotal">Rp 0</span>
+        </div>
+      </div>
+
+      <button id="submitOrderBtn" type="submit" class="btn-primary w-full py-3 rounded-full font-semibold shadow-md">Kirim Pesanan via WhatsApp</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= TOAST ================= -->
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-cocoa text-cream px-5 py-3 rounded-full shadow-xl text-sm font-medium opacity-0 pointer-events-none transition-opacity duration-300 z-[60]"></div>
+
+<script>
+  /* ==================== KONFIGURASI SUPABASE ==================== */
+  const SUPABASE_URL = "URL_SUPABASE";
+  const SUPABASE_ANON_KEY = "ANON_KEY_SUPABASE";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  /* Nomor WhatsApp Admin (format internasional tanpa +) */
+  const ADMIN_WHATSAPP_NUMBER = "6281234567890";
+
+  /* ==================== STATE ==================== */
+  let PRODUCTS = [];
+  let CART = JSON.parse(localStorage.getItem('loven_cart') || '[]');
+
+  /* ==================== UTIL ==================== */
+  function formatRupiah(num) {
+    return 'Rp ' + Number(num).toLocaleString('id-ID');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.remove('opacity-0');
+    t.classList.add('opacity-100');
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => {
+      t.classList.remove('opacity-100');
+      t.classList.add('opacity-0');
+    }, 2200);
+  }
+
+  function saveCart() {
+    localStorage.setItem('loven_cart', JSON.stringify(CART));
+    renderCartBadge();
+    renderCartPanel();
+  }
+
+  /* ==================== NAVBAR MOBILE ==================== */
+  const menuToggle = document.getElementById('menuToggle');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const iconOpen = document.getElementById('iconOpen');
+  const iconClose = document.getElementById('iconClose');
+  let mobileOpen = false;
+
+  menuToggle.addEventListener('click', () => {
+    mobileOpen = !mobileOpen;
+    if (mobileOpen) {
+      mobileMenu.style.maxHeight = mobileMenu.scrollHeight + 'px';
+      mobileMenu.style.opacity = '1';
+      iconOpen.classList.add('hidden');
+      iconClose.classList.remove('hidden');
+    } else {
+      mobileMenu.style.maxHeight = '0px';
+      mobileMenu.style.opacity = '0';
+      iconOpen.classList.remove('hidden');
+      iconClose.classList.add('hidden');
+    }
+  });
+
+  document.querySelectorAll('#mobileMenu a').forEach(a => {
+    a.addEventListener('click', () => {
+      mobileOpen = false;
+      mobileMenu.style.maxHeight = '0px';
+      mobileMenu.style.opacity = '0';
+      iconOpen.classList.remove('hidden');
+      iconClose.classList.add('hidden');
+    });
+  });
+
+  /* ==================== FETCH PRODUK DARI SUPABASE ==================== */
+  async function fetchProducts() {
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const grid = document.getElementById('productGrid');
+
+    loadingState.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    grid.innerHTML = '';
+
+    try {
+      const { data, error } = await supabaseClient
+        .from('produk')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      PRODUCTS = data || [];
+      loadingState.classList.add('hidden');
+
+      if (PRODUCTS.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      renderProducts();
+    } catch (err) {
+      console.error('Gagal mengambil produk:', err);
+      loadingState.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+      emptyState.querySelector('p').textContent = 'Gagal memuat menu. Periksa koneksi atau konfigurasi Supabase.';
+    }
+  }
+
+  function renderProducts() {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = PRODUCTS.map(p => `
+      <div class="card-cake fade-in bg-white rounded-2xl overflow-hidden shadow-md border border-rose/20 flex flex-col">
+        <div class="h-44 sm:h-48 md:h-52 w-full overflow-hidden bg-blush/40">
+          <img src="${p.gambar_url || p.image_url || 'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?q=80&w=600&auto=format&fit=crop'}" alt="${escapeHtml(p.nama)}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1486427944299-d1955d23e34d?q=80&w=600&auto=format&fit=crop'">
+        </div>
+        <div class="p-4 md:p-5 flex flex-col flex-1">
+          <h3 class="font-display text-lg md:text-xl font-600 text-cocoa">${escapeHtml(p.nama)}</h3>
+          <p class="text-xs md:text-sm text-cocoalight mt-1 flex-1 line-clamp-3">${escapeHtml(p.deskripsi || '')}</p>
+          <div class="flex items-center justify-between mt-4">
+            <span class="font-semibold text-rosedeep text-sm md:text-base">${formatRupiah(p.harga)}</span>
+            <button onclick="addToCart('${p.id}')" class="btn-primary text-xs md:text-sm px-4 py-2 rounded-full font-semibold">+ Keranjang</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+
+  /* ==================== KERANJANG ==================== */
+  function addToCart(productId) {
+    const product = PRODUCTS.find(p => String(p.id) === String(productId));
+    if (!product) return;
+
+    const existing = CART.find(item => String(item.id) === String(productId));
+    if (existing) {
+      existing.qty += 1;
+    } else {
+      CART.push({
+        id: product.id,
+        nama: product.nama,
+        harga: product.harga,
+        gambar_url: product.gambar_url || product.image_url || '',
+        qty: 1
+      });
+    }
+    saveCart();
+    showToast(`${product.nama} ditambahkan ke keranjang 🍰`);
+
+    const badge = document.getElementById('cartBadge');
+    badge.classList.remove('badge-pulse');
+    void badge.offsetWidth;
+    badge.classList.add('badge-pulse');
+  }
+
+  function changeQty(productId, delta) {
+    const item = CART.find(i => String(i.id) === String(productId));
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) {
+      CART = CART.filter(i => String(i.id) !== String(productId));
+    }
+    saveCart();
+  }
+
+  function removeFromCart(productId) {
+    CART = CART.filter(i => String(i.id) !== String(productId));
+    saveCart();
+  }
+
+  function cartTotal() {
+    return CART.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+  }
+
+  function cartCount() {
+    return CART.reduce((sum, item) => sum + item.qty, 0);
+  }
+
+  function renderCartBadge() {
+    document.getElementById('cartBadge').textContent = cartCount();
+  }
+
+  function renderCartPanel() {
+    const wrap = document.getElementById('cartItemsWrap');
+    const emptyMsg = document.getElementById('cartEmptyMsg');
+    const totalEl = document.getElementById('cartTotal');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    if (CART.length === 0) {
+      wrap.classList.add('hidden');
+      emptyMsg.classList.remove('hidden');
+      checkoutBtn.disabled = true;
+      checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      wrap.classList.remove('hidden');
+      emptyMsg.classList.add('hidden');
+      checkoutBtn.disabled = false;
+      checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+      wrap.innerHTML = CART.map(item => `
+        <div class="flex gap-3 items-center bg-blush/30 rounded-xl p-3">
+          <img src="${item.gambar_url || 'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?q=80&w=200&auto=format&fit=crop'}" class="w-16 h-16 rounded-lg object-cover flex-shrink-0">
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-sm text-cocoa truncate">${escapeHtml(item.nama)}</p>
+            <p class="text-xs text-cocoalight">${formatRupiah(item.harga)}</p>
+            <div class="flex items-center gap-2 mt-2">
+              <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 rounded-full bg-white border border-rose/50 text-rosedeep font-bold flex items-center justify-center hover:bg-rose/20">−</button>
+              <span class="text-sm font-semibold w-5 text-center">${item.qty}</span>
+              <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 rounded-full bg-white border border-rose/50 text-rosedeep font-bold flex items-center justify-center hover:bg-rose/20">+</button>
+              <button onclick="removeFromCart('${item.id}')" class="ml-auto text-xs text-red-400 hover:text-red-600 underline">Hapus</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    totalEl.textContent = formatRupiah(cartTotal());
+    document.getElementById('checkoutTotal').textContent = formatRupiah(cartTotal());
+  }
+
+  /* ==================== MODAL: KERANJANG ==================== */
+  const cartOverlay = document.getElementById('cartOverlay');
+  const cartPanel = document.getElementById('cartPanel');
+
+  document.getElementById('cartBtn').addEventListener('click', () => {
+    renderCartPanel();
+    cartOverlay.classList.remove('hidden');
+    requestAnimationFrame(() => cartPanel.classList.remove('translate-x-full'));
+    document.body.style.overflow = 'hidden';
+  });
+
+  function closeCart() {
+    cartPanel.classList.add('translate-x-full');
+    document.body.style.overflow = '';
+    setTimeout(() => cartOverlay.classList.add('hidden'), 350);
+  }
+
+  /* ==================== MODAL: CHECKOUT ==================== */
+  const checkoutOverlay = document.getElementById('checkoutOverlay');
+
+  function openCheckout() {
+    if (CART.length === 0) return;
+    closeCart();
+    document.getElementById('checkoutTotal').textContent = formatRupiah(cartTotal());
+    checkoutOverlay.classList.remove('hidden');
+    checkoutOverlay.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCheckout() {
+    checkoutOverlay.classList.add('hidden');
+    checkoutOverlay.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+
+  /* ==================== SUBMIT PESANAN ==================== */
+  async function submitOrder(e) {
+    e.preventDefault();
+
+    const nama = document.getElementById('inputNama').value.trim();
+    const wa = document.getElementById('inputWA').value.trim();
+    const alamat = document.getElementById('inputAlamat').value.trim();
+
+    if (!nama || !wa || !alamat) {
+      showToast('Mohon lengkapi semua data ya!');
+      return;
+    }
+    if (CART.length === 0) {
+      showToast('Keranjang masih kosong.');
+      return;
+    }
+
+    const submitBtn = document.getElementById('submitOrderBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Memproses...';
+
+    const orderItems = CART.map(item => ({
+      id: item.id,
+      nama: item.nama,
+      harga: item.harga,
+      qty: item.qty,
+      subtotal: item.harga * item.qty
+    }));
+    const total = cartTotal();
+
+    try {
+      const { error } = await supabaseClient
+        .from('pesanan')
+        .insert([{
+          nama_pembeli: nama,
+          no_wa: wa,
+          alamat: alamat,
+          items: orderItems,
+          total: total,
+          status: 'Menunggu Konfirmasi'
+        }]);
+
+      if (error) throw error;
+
+      let pesanText = `Halo LOVEN! 🍰%0AAku ingin memesan:%0A%0A`;
+      orderItems.forEach((item, idx) => {
+        pesanText += `${idx + 1}. ${item.nama} x${item.qty} = ${formatRupiah(item.subtotal)}%0A`;
+      });
+      pesanText += `%0A*Total: ${formatRupiah(total)}*%0A%0A`;
+      pesanText += `Nama: ${nama}%0ANo. WA: ${wa}%0AAlamat: ${alamat}%0A%0ATerima kasih!`;
+
+      CART = [];
+      saveCart();
+      closeCheckout();
+      document.getElementById('checkoutForm').reset();
+      showToast('Pesanan berhasil dikirim! Mengarahkan ke WhatsApp...');
+
+      setTimeout(() => {
+        window.location.href = `https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${pesanText}`;
+      }, 900);
+
+    } catch (err) {
+      console.error('Gagal mengirim pesanan:', err);
+      showToast('Gagal mengirim pesanan. Coba lagi.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Kirim Pesanan via WhatsApp';
+    }
+  }
+
+  /* ==================== INIT ==================== */
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchProducts();
+    renderCartBadge();
+  });
+</script>
+</body>
+</html>
