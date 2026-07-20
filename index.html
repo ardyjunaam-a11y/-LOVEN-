@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOVEN | Kue & Dessert</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink-deep:#f4a7c1;
+    --cream:#fdf6ec;
+    --brown:#6b4226;
+    --brown-light:#a97c50;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:'Poppins',sans-serif;background-color:#f7f3ee;color:var(--brown);}
+  .font-display{font-family:'Playfair Display',serif;}
+  .card{background:#fff;border-radius:1.25rem;box-shadow:0 4px 16px rgba(0,0,0,0.05);}
+  .btn-primary{background:linear-gradient(135deg,var(--pink-deep),#e88bab);color:#fff;transition:.25s ease;}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(244,167,193,0.5);}
+  .btn-primary:disabled{opacity:.6;transform:none;box-shadow:none;cursor:not-allowed;}
+  .fade-in{animation:fadeIn .35s ease both;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .modal-backdrop{background:rgba(59,40,25,0.45);}
+  .cart-drawer{transition:transform .3s ease;}
+  .cart-drawer.closed{transform:translateX(100%);}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:#e5d5c5;border-radius:8px;}
+</style>
+</head>
+<body>
+
+<!-- ================== TOKO ================== -->
+<header class="sticky top-0 z-30 bg-[#fdf6ec]/95 backdrop-blur border-b border-black/5">
+  <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
+    <h1 class="font-display text-2xl font-extrabold text-brown">LOVEN</h1>
+    <button id="cartBtn" class="relative text-sm font-medium px-3 py-2 rounded-lg hover:bg-black/5">
+      🛒 <span class="hidden sm:inline">Keranjang</span>
+      <span id="cartBadge" class="hidden absolute -top-1 -right-1 bg-[var(--pink-deep)] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">0</span>
+    </button>
+  </div>
+</header>
+
+<section class="px-5 pt-12 pb-8 text-center" style="background:radial-gradient(circle at 50% 0%, rgba(244,167,193,0.2), transparent 55%);">
+  <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-brown mb-3">Kue &amp; Dessert Buatan Tangan</h2>
+  <p class="text-brown-light max-w-md mx-auto" style="color:var(--brown-light)">Pilih kue favoritmu, isi data pemesan, lalu pesanan langsung dikirim ke WhatsApp kami.</p>
+</section>
+
+<main class="max-w-6xl mx-auto px-5 pb-20">
+  <div class="flex flex-col sm:flex-row gap-3 mb-6">
+    <input id="searchInput" type="text" placeholder="Cari kue..." class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300 text-sm">
+    <div id="kategoriTabs" class="flex gap-2 overflow-x-auto"></div>
+  </div>
+  <div id="produkGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"></div>
+  <p id="emptyProduk" class="hidden text-center text-brown-light py-16" style="color:var(--brown-light)">Kue yang kamu cari tidak ditemukan.</p>
+
+  <!-- KONTAK & LOKASI -->
+  <section class="mt-6">
+    <div class="card p-6 sm:p-8 text-center">
+      <h3 class="font-display text-2xl font-bold text-brown mb-2">Kontak &amp; Lokasi</h3>
+      <p class="text-sm text-brown-light mb-1" style="color:var(--brown-light)">📍 <span id="contactAlamat"></span></p>
+      <p id="contactJamBuka" class="hidden text-sm text-brown-light mb-1" style="color:var(--brown-light)">🕒 <span id="contactJamBukaText"></span></p>
+      <a id="contactIgLink" href="#" target="_blank" class="hidden inline-block text-sm text-brown-light mb-1 underline" style="color:var(--brown-light)">📷 Instagram</a>
+      <p class="text-sm text-brown-light mb-5 mt-2" style="color:var(--brown-light)">Ada pertanyaan, mau pesan kue custom, atau kuenya belum ada di daftar? Langsung chat aja.</p>
+      <button id="contactWaBtn" class="btn-primary px-6 py-2.5 rounded-lg font-semibold text-sm">💬 Chat via WhatsApp</button>
+    </div>
+  </section>
+</main>
+
+<footer class="text-center text-xs text-brown-light py-8 border-t border-black/5" style="color:var(--brown-light)">
+  &copy; <span id="year"></span> LOVEN. Semua pesanan diproses manual via WhatsApp.
+</footer>
+
+<!-- TOMBOL WA MELAYANG -->
+<a id="floatingWaBtn" href="#" target="_blank" class="fixed bottom-5 right-5 z-40 flex items-center gap-2 bg-[#25D366] text-white pl-4 pr-5 py-3 rounded-full shadow-lg font-semibold text-sm hover:brightness-95 transition">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.85 9.85 0 0 0 12.04 2zm0 18.13h-.01a8.2 8.2 0 0 1-4.18-1.14l-.3-.18-3.11.82.83-3.03-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.21-8.25 8.21zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.14.17-.29.19-.53.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.43.06-.66.31-.23.25-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12 .17 1.73 2.64 4.2 3.7.59.25 1.05.4 1.41.52.59.19 1.13.16 1.55.1.47-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.14-1.18-.06-.11-.23-.17-.48-.29z"/></svg>
+  Chat WA
+</a>
+
+<!-- CART DRAWER -->
+<div id="cartOverlay" class="hidden fixed inset-0 z-40 modal-backdrop" onclick="closeCart()"></div>
+<aside id="cartDrawer" class="cart-drawer closed fixed top-0 right-0 z-50 h-full w-full sm:w-96 bg-white shadow-2xl flex flex-col">
+  <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <h3 class="font-display text-xl font-bold text-brown">Keranjang</h3>
+    <button onclick="closeCart()" class="text-2xl leading-none text-brown-light" style="color:var(--brown-light)">&times;</button>
+  </div>
+  <div id="cartItemsWrap" class="flex-1 overflow-y-auto px-5 py-4 space-y-4"></div>
+  <p id="cartEmptyMsg" class="hidden text-center text-brown-light py-10" style="color:var(--brown-light)">Keranjangmu masih kosong.</p>
+  <div class="px-5 py-4 border-t border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-semibold">Total</span>
+      <span id="cartTotal" class="font-display text-xl font-bold">Rp 0</span>
+    </div>
+    <button id="checkoutBtn" class="btn-primary w-full py-3 rounded-lg font-semibold">Checkout</button>
+  </div>
+</aside>
+
+<!-- CHECKOUT MODAL -->
+<div id="checkoutModal" class="hidden fixed inset-0 z-40 modal-backdrop flex items-center justify-center px-4 py-8 overflow-y-auto">
+  <div class="card p-8 max-w-md w-full fade-in relative my-auto">
+    <button onclick="closeModal('checkoutModal')" class="absolute top-4 right-4 text-brown-light text-xl leading-none" style="color:var(--brown-light)">&times;</button>
+
+    <div id="checkoutStep1">
+      <h2 class="font-display text-2xl font-bold text-brown mb-5">Data Pemesan</h2>
+      <form id="checkoutForm" class="space-y-3">
+        <div>
+          <label class="text-sm font-medium">Nama Penerima</label>
+          <input type="text" id="ckNama" required class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300 text-sm">
+        </div>
+        <div>
+          <label class="text-sm font-medium">No. WhatsApp</label>
+          <input type="tel" id="ckWa" required placeholder="08xxxxxxxxxx" class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300 text-sm">
+        </div>
+        <div>
+          <label class="text-sm font-medium">Alamat Lengkap</label>
+          <textarea id="ckAlamat" required rows="2" class="w-full mt-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-pink-300 text-sm"></textarea>
+        </div>
+        <div class="bg-[#fdf6ec] rounded-lg p-4 text-sm">
+          <div class="flex justify-between font-semibold"><span>Total Belanja</span><span id="ckTotal">Rp 0</span></div>
+        </div>
+        <button type="submit" class="btn-primary w-full py-2.5 rounded-lg font-semibold text-sm">Lanjut ke Pembayaran</button>
+      </form>
+    </div>
+
+    <div id="checkoutStep2" class="hidden">
+      <h2 class="font-display text-2xl font-bold text-brown mb-1">Pembayaran</h2>
+      <p class="text-xs text-brown-light mb-5" style="color:var(--brown-light)">Scan QRIS / transfer, lalu kirim pesanan &amp; foto bukti bayar lewat WhatsApp.</p>
+      <div id="paymentInfoWrap" class="mb-5"></div>
+      <button id="waSubmitBtn" class="btn-primary w-full py-2.5 rounded-lg font-semibold text-sm">📲 Kirim Pesanan via WhatsApp</button>
+      <button type="button" onclick="backToStep1()" class="w-full py-2 mt-2 text-xs text-brown-light" style="color:var(--brown-light)">&larr; Kembali</button>
+    </div>
+
+    <div id="checkoutStep3" class="hidden text-center py-6">
+      <div class="text-5xl mb-4">🎉</div>
+      <h2 class="font-display text-2xl font-bold text-brown mb-2">Pesanan Terkirim!</h2>
+      <p class="text-sm text-brown-light mb-6" style="color:var(--brown-light)">Chat WhatsApp sudah terbuka. Jangan lupa lampirkan foto bukti bayar di chat tersebut ya.</p>
+      <button onclick="closeModal('checkoutModal')" class="btn-primary px-6 py-2.5 rounded-lg font-semibold text-sm">Selesai</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   GANTI BAGIAN INI SESUAI TOKO KAMU — gak perlu Supabase/database
+   ============================================================ */
+
+// Nomor WhatsApp admin. Format: kode negara + nomor, TANPA "+", TANPA "0" di depan.
+// Contoh nomor 0812-3456-7890 ditulis jadi "6281234567890"
+const ADMIN_WA = "6289611622049";
+
+// Alamat toko, ditampilkan di bagian Kontak & Lokasi.
+const ADMIN_ALAMAT = "Jalan Pahlawan 4";
+
+// Link gambar QRIS (opsional). Kosongkan ("") kalau tidak pakai QRIS.
+const QRIS_IMAGE_URL = "";
+
+// Info rekening / pembayaran lain yang muncul di halaman checkout.
+const INFO_PEMBAYARAN = "Transfer ke BCA 1234567890 a.n. Nama Kamu";
+
+// Info tambahan buat bagian Kontak & Lokasi (boleh dikosongin "" kalau tidak dipakai)
+const JAM_BUKA = "Setiap hari, 08.00 - 20.00";
+const INSTAGRAM_LINK = ""; // contoh: "https://instagram.com/tokokamu"
+
+// Daftar produk. Tambah/hapus/ubah item di bawah ini sesuka hati.
+// "kategori" dipakai buat filter tab. "best" = true kalau mau kasih label Best Seller.
+const PRODUK = [
+  { id: 1, nama: "Red Velvet Slice", harga: 25000, kategori: "Cake", best: true, deskripsi: "Lembut, creamy, taburan choco chip.", gambar: "https://images.unsplash.com/photo-1586985289906-406988974504?w=400" },
+  { id: 2, nama: "Choco Lava Cake", harga: 22000, kategori: "Cake", best: true, deskripsi: "Coklat leleh di dalam, hangat & manis.", gambar: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400" },
+  { id: 3, nama: "Cheesecake Blueberry", harga: 30000, kategori: "Cake", best: false, deskripsi: "Cheesecake lembut dengan saus blueberry.", gambar: "https://images.unsplash.com/photo-1567327613485-fbc7bf196333?w=400" },
+  { id: 4, nama: "Croissant Almond", harga: 18000, kategori: "Pastry", best: false, deskripsi: "Renyah di luar, lembut di dalam, taburan almond.", gambar: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400" },
+  { id: 5, nama: "Tiramisu Cup", harga: 20000, kategori: "Cake", best: true, deskripsi: "Lapisan kopi & mascarpone lembut khas Italia.", gambar: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400" },
+  { id: 6, nama: "Macaron Box (6pcs)", harga: 45000, kategori: "Pastry", best: false, deskripsi: "Renyah di luar, chewy di dalam, aneka rasa.", gambar: "https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=400" },
+  { id: 7, nama: "Cinnamon Roll", harga: 17000, kategori: "Pastry", best: false, deskripsi: "Gulungan hangat dengan taburan kayu manis & icing.", gambar: "https://images.unsplash.com/photo-1509365465985-25d11c17e812?w=400" },
+  { id: 8, nama: "Donat Coklat Keju", harga: 12000, kategori: "Pastry", best: false, deskripsi: "Donat empuk dengan topping coklat & keju parut.", gambar: "https://images.unsplash.com/photo-1551106652-a5bcf4b29ab6?w=400" },
+  { id: 9, nama: "Cupcake Vanilla", harga: 15000, kategori: "Cake", best: false, deskripsi: "Cupcake vanilla lembut dengan buttercream cantik.", gambar: "https://images.unsplash.com/photo-1614707267537-b85aaf00c4b7?w=400" },
+  { id: 10, nama: "Es Kopi Susu", harga: 18000, kategori: "Minuman", best: true, deskripsi: "Kopi susu gula aren, cocok jadi teman kue.", gambar: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400" }
+];
+
+/* ============================================================
+   Mulai dari sini gak perlu diubah-ubah lagi
+   ============================================================ */
+
+function showEl(id) { document.getElementById(id).classList.remove("hidden"); }
+function hideEl(id) { document.getElementById(id).classList.add("hidden"); }
+function openModal(id) { showEl(id); }
+function closeModal(id) { hideEl(id); }
+function formatRupiah(angka) { return "Rp " + Number(angka).toLocaleString("id-ID"); }
+
+document.getElementById("year").textContent = new Date().getFullYear();
+document.getElementById("contactAlamat").textContent = ADMIN_ALAMAT || "-";
+document.getElementById("floatingWaBtn").href = `https://wa.me/${ADMIN_WA}`;
+document.getElementById("contactWaBtn").addEventListener("click", () => {
+  window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent("Halo LOVEN, saya mau tanya-tanya.")}`, "_blank");
+});
+if (typeof JAM_BUKA !== "undefined" && JAM_BUKA) {
+  document.getElementById("contactJamBukaText").textContent = JAM_BUKA;
+  showEl("contactJamBuka");
+}
+if (typeof INSTAGRAM_LINK !== "undefined" && INSTAGRAM_LINK) {
+  const ig = document.getElementById("contactIgLink");
+  ig.href = INSTAGRAM_LINK;
+  ig.classList.remove("hidden");
+}
+
+/* ================== PRODUK ================== */
+let activeKategori = "Semua";
+let searchTerm = "";
+
+function renderKategoriTabs() {
+  const wrap = document.getElementById("kategoriTabs");
+  const kategoriList = ["Semua", ...new Set((PRODUK || []).map(p => p.kategori).filter(Boolean))];
+  wrap.innerHTML = kategoriList.map(k => `
+    <button data-kategori="${k}" class="kategoriTabBtn whitespace-nowrap text-xs sm:text-sm font-medium px-3 py-2 rounded-lg border ${k === activeKategori ? 'btn-primary border-transparent' : 'border-gray-200 text-brown-light'}">${k}</button>
+  `).join("");
+  wrap.querySelectorAll(".kategoriTabBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeKategori = btn.getAttribute("data-kategori");
+      renderKategoriTabs();
+      renderProduk();
+    });
+  });
+}
+
+function renderProduk() {
+  const grid = document.getElementById("produkGrid");
+  const filtered = (PRODUK || []).filter(p => {
+    const cocokKategori = activeKategori === "Semua" || p.kategori === activeKategori;
+    const cocokSearch = !searchTerm || p.nama.toLowerCase().includes(searchTerm.toLowerCase());
+    return cocokKategori && cocokSearch;
+  });
+
+  if (filtered.length === 0) { showEl("emptyProduk"); } else { hideEl("emptyProduk"); }
+
+  const kartuProduk = filtered.map(p => `
+    <div class="card overflow-hidden fade-in flex flex-col relative">
+      ${p.best ? `<span class="absolute top-2 left-2 z-10 bg-[var(--pink-deep)] text-white text-[10px] font-bold px-2 py-1 rounded-full">⭐ Best Seller</span>` : ""}
+      <img src="${p.gambar || 'https://placehold.co/300x220/fdf6ec/a97c50?text=LOVEN'}" onerror="this.src='https://placehold.co/300x220/fdf6ec/a97c50?text=LOVEN'" class="w-full h-32 sm:h-40 object-cover">
+      <div class="p-3 sm:p-4 flex flex-col flex-1">
+        <h3 class="font-semibold text-sm sm:text-base leading-snug mb-1">${p.nama}</h3>
+        <p class="text-xs text-brown-light mb-2 line-clamp-2 flex-1" style="color:var(--brown-light)">${p.deskripsi || ""}</p>
+        <div class="flex items-center justify-between mt-auto">
+          <span class="font-bold text-sm">${formatRupiah(p.harga)}</span>
+          <button onclick='addToCart(${JSON.stringify({id:p.id, nama:p.nama, harga:p.harga, gambar:p.gambar})})' class="btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">+ Keranjang</button>
+        </div>
+      </div>
+    </div>`).join("");
+
+  // Kartu ajakan chat WA — buat kue custom / yang belum ada di daftar / belum ada fotonya
+  const kartuCustom = `
+    <div class="card overflow-hidden fade-in flex flex-col items-center justify-center text-center p-5 border-2 border-dashed" style="border-color:var(--pink-deep);">
+      <div class="text-3xl mb-2">🍰💬</div>
+      <h3 class="font-semibold text-sm sm:text-base mb-1">Cari kue lain?</h3>
+      <p class="text-xs text-brown-light mb-3" style="color:var(--brown-light)">Belum ada di daftar atau mau request custom, chat kami aja.</p>
+      <button onclick="openCustomOrderWa()" class="btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">💬 Chat WA</button>
+    </div>`;
+
+  grid.innerHTML = kartuProduk + kartuCustom;
+}
+
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  searchTerm = e.target.value.trim();
+  renderProduk();
+});
+
+function buildWaLink(pesan) {
+  return `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(pesan)}`;
+}
+
+function openCustomOrderWa() {
+  const pesan = `Halo LOVEN, saya mau tanya-tanya / pesan kue custom yang belum ada di daftar menu.`;
+  window.open(buildWaLink(pesan), "_blank");
+}
+window.openCustomOrderWa = openCustomOrderWa;
+
+/* ================== KERANJANG (disimpan di browser) ================== */
+const CART_KEY = "loven_cart";
+function getCart() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { return []; } }
+function saveCart(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)); renderCart(); }
+function addToCart(produk) {
+  const cart = getCart();
+  const existing = cart.find(i => i.id === produk.id);
+  if (existing) existing.qty += 1; else cart.push({ ...produk, qty: 1 });
+  saveCart(cart);
+  openCart();
+}
+window.addToCart = addToCart;
+function updateQty(id, delta) {
+  let cart = getCart();
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+  saveCart(cart);
+}
+window.updateQty = updateQty;
+function cartTotal(cart) { return cart.reduce((sum, i) => sum + i.harga * i.qty, 0); }
+
+function renderCart() {
+  const cart = getCart();
+  const wrap = document.getElementById("cartItemsWrap");
+  const badge = document.getElementById("cartBadge");
+  const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+  if (totalQty > 0) { badge.textContent = totalQty; showEl("cartBadge"); } else { hideEl("cartBadge"); }
+  if (cart.length === 0) { wrap.innerHTML = ""; showEl("cartEmptyMsg"); }
+  else {
+    hideEl("cartEmptyMsg");
+    wrap.innerHTML = cart.map(i => `
+      <div class="flex gap-3 items-center">
+        <img src="${i.gambar || 'https://via.placeholder.com/60'}" class="w-14 h-14 rounded-lg object-cover">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium truncate">${i.nama}</p>
+          <p class="text-xs text-brown-light" style="color:var(--brown-light)">${formatRupiah(i.harga)}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="updateQty(${i.id}, -1)" class="w-7 h-7 rounded-full border border-gray-200 text-sm">-</button>
+          <span class="text-sm w-4 text-center">${i.qty}</span>
+          <button onclick="updateQty(${i.id}, 1)" class="w-7 h-7 rounded-full border border-gray-200 text-sm">+</button>
+        </div>
+      </div>`).join("");
+  }
+  const total = cartTotal(cart);
+  document.getElementById("cartTotal").textContent = formatRupiah(total);
+  document.getElementById("ckTotal").textContent = formatRupiah(total);
+}
+
+function openCart() { showEl("cartOverlay"); document.getElementById("cartDrawer").classList.remove("closed"); }
+function closeCart() { hideEl("cartOverlay"); document.getElementById("cartDrawer").classList.add("closed"); }
+window.closeCart = closeCart;
+document.getElementById("cartBtn").addEventListener("click", openCart);
+
+/* ================== CHECKOUT -> WHATSAPP ================== */
+document.getElementById("checkoutBtn").addEventListener("click", () => {
+  if (getCart().length === 0) return;
+  closeCart();
+  showEl("checkoutStep1"); hideEl("checkoutStep2"); hideEl("checkoutStep3");
+  document.getElementById("ckTotal").textContent = formatRupiah(cartTotal(getCart()));
+  openModal("checkoutModal");
+});
+
+function backToStep1() { showEl("checkoutStep1"); hideEl("checkoutStep2"); }
+window.backToStep1 = backToStep1;
+
+let pendingOrder = null;
+
+document.getElementById("checkoutForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  pendingOrder = {
+    nama_pembeli: document.getElementById("ckNama").value.trim(),
+    no_wa: document.getElementById("ckWa").value.trim(),
+    alamat: document.getElementById("ckAlamat").value.trim()
+  };
+  hideEl("checkoutStep1"); showEl("checkoutStep2");
+  renderPaymentInfo();
+});
+
+function renderPaymentInfo() {
+  const wrap = document.getElementById("paymentInfoWrap");
+  let html = "";
+  if (QRIS_IMAGE_URL) {
+    html += `<div class="text-center mb-4">
+      <img src="${QRIS_IMAGE_URL}" class="w-48 h-48 object-contain mx-auto border border-gray-100 rounded-lg p-2">
+      <p class="text-xs text-brown-light mt-2" style="color:var(--brown-light)">Scan QRIS untuk membayar</p>
+    </div>`;
+  }
+  if (INFO_PEMBAYARAN) {
+    html += `<div class="bg-[#fdf6ec] rounded-lg p-4 text-sm whitespace-pre-line">${INFO_PEMBAYARAN}</div>`;
+  }
+  if (!html) html = `<p class="text-sm text-brown-light text-center" style="color:var(--brown-light)">Info pembayaran belum diatur.</p>`;
+  wrap.innerHTML = html;
+}
+
+document.getElementById("waSubmitBtn").addEventListener("click", () => {
+  const cart = getCart();
+  if (cart.length === 0 || !pendingOrder) return;
+  const total = cartTotal(cart);
+  const itemsText = cart.map(i => `- ${i.nama} x${i.qty} = ${formatRupiah(i.harga * i.qty)}`).join("\n");
+  const pesan =
+`Halo LOVEN, saya mau pesan:
+${itemsText}
+
+Total: ${formatRupiah(total)}
+
+Nama: ${pendingOrder.nama_pembeli}
+No. WA: ${pendingOrder.no_wa}
+Alamat: ${pendingOrder.alamat}
+
+(Bukti bayar akan saya kirim menyusul di chat ini)`;
+
+  const url = `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(pesan)}`;
+  window.open(url, "_blank");
+
+  saveCart([]);
+  hideEl("checkoutStep2"); showEl("checkoutStep3");
+});
+
+/* ================== JALANKAN ================== */
+renderKategoriTabs();
+renderProduk();
+renderCart();
+</script>
+</body>
+</html>
